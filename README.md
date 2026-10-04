@@ -7,6 +7,17 @@
 求职目标、进度、证据和审批都有明确的存放位置。换 Agent 或开新会话时，从文件接着做。
 计划、Agent 声称、仓库记录、平台回读分开记录。投递、发消息、改平台资料等对外动作先由你批准。
 
+## 最省事的开始方式
+
+目前只支持 macOS。你只需要先装好 [Claude 桌面应用](https://claude.ai/download)（Code 标签页）或 [Codex](https://chatgpt.com/codex)，然后直接对 Agent 说：
+
+> 帮我把 https://github.com/LeiZiKang/jobflow clone 到本地，然后帮我初始化。
+
+连 git clone 都可以交给 Agent。其他东西它会检查，逐项说明装什么、为什么需要、官方来源、大约大小、安装位置和卸载方法，再问你要不要装。不同意就跳过，不反复劝。
+新 Mac 若还没有 git / python3，Agent 先征得同意再触发 `xcode-select --install`，由你在 Apple 弹窗里完成命令行工具安装，之后继续 clone 和初始化。
+管理员密码、系统弹窗和平台登录都由你本人处理；不会修改 shell 配置、代理、网络或系统设置。
+
+
 ## 核心设计
 
 - 仓库保存状态、任务、证据和报告；个人目标与渠道配置放在仓库外。
@@ -19,14 +30,16 @@
 
 先读 [新手指南](docs/新手指南.md)，提前想好目标、权重、硬线和渠道。
 
-- macOS 或 Linux，Git，Python 3.9+。引擎只用标准库。
+- 目前只支持 macOS；只需先装 Agent，其他环境由 Agent 检查并逐项询问是否代装。Python 3.9+ 引擎只用标准库。
 - 能打开本地仓库的 Claude Code、Codex 或其他 Agent。
 - 至少一份简历，放进 `03-简历/`；PDF、Markdown、JSON、DOCX、TXT 均可。
-- 推荐 [ego lite](https://lite.ego.app/) 和 Agent 侧的 `ego-browser` skill，以复用你自己的浏览器登录态。目前官方安装脚本只支持 macOS；不装时只能读未登录公开页面。
+- 推荐 [ego lite](https://lite.ego.app/) 和 Agent 侧的 `ego-browser` skill，以复用你自己的浏览器登录态。可在同意后用 setup.sh 安装官方 DMG；不装时只能读未登录公开页面。
 - 选好 BOSS直聘、猎聘、LinkedIn、Indeed、前程无忧、公司官网/ATS 等渠道，由你自己登录。Agent 不碰账号密码或验证码。
-- 可选：Node 20.9+ 用于控制台；Xcode Command Line Tools 用于 macOS 菜单栏 App；作品集、已有机会、identity.json。
+- 可选：Node 20.9+ 用于控制台；菜单栏 App 下载即用；作品集、已有机会、identity.json。
 
 ## 快速开始
+
+手动方式：若 git / python3 尚不可用，先在终端运行 `xcode-select --install`，自行完成 Apple 弹窗。
 
 ```bash
 git clone https://github.com/LeiZiKang/jobflow.git
@@ -56,8 +69,8 @@ python3 00-工作流系统/bin/jobflow.py doctor --json
 ```
 
 **准备好了**：doctor 必需项全部 ok，且 check-all 通过。doctor 不输出 goals / identity 正文。
-Node、控制台依赖、ego-browser、identity.json 缺失只会 warn，不影响 doctor 退出码。
-控制台依赖须同时具备可执行的 `.bin/tsc` 和 `.bin/next`；残缺安装需重新 npm install。
+Node 缺失标为 missing；控制台依赖、ego-browser、菜单栏 App、identity.json 是可选项，均不影响 doctor 退出码。
+控制台依赖须同时具备可执行的 `.bin/tsc` 和 `.bin/next`；残缺安装需运行 setup.sh 逐项同意修复。
 `foreign_first` 未回答时保留 null，评分照常可用，只是不按所有制排序。
 平台登录与实际可访问性仍需核实。第一步建议手动跑一次只读岗位检索。
 
@@ -75,8 +88,7 @@ python3 00-工作流系统/bin/jobflow.py init --force
 ## 打开控制台
 
 ```bash
-cd console && npm install
-cd ..
+./00-工作流系统/scripts/setup.sh  # 逐项同意 / per-item consent
 ./00-工作流系统/local-control/start.sh
 ```
 
@@ -84,7 +96,7 @@ cd ..
 请用启动脚本，不要直接 `npm run dev`；脚本负责连接本地服务。
 
 零 Node 的只读看板：`./打开看板.command`。
-macOS 菜单栏 App：`./00-工作流系统/menubar-app/build.sh`。
+可选菜单栏 App：运行 setup.sh，逐项同意后从 [GitHub Releases](https://github.com/LeiZiKang/jobflow/releases/latest/download/Jobflow.dmg) 安装到 `~/Applications`。首次打开遇 Gatekeeper 拦截时右键→打开，或在「系统设置→隐私与安全性」点“仍要打开”；首次启动选择仓库文件夹。开发者仍可运行 `./00-工作流系统/menubar-app/build.sh`。
 
 ## 日常怎么用
 

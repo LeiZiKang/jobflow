@@ -16,6 +16,7 @@ BIN = Path(__file__).resolve().parents[1] / "bin"
 sys.path.insert(0, str(BIN))
 import jobflow
 import jobflow_doctor as doctor
+import jobflow_environment as environment
 from jobflow_profile import CHANNEL_CONFIGS, ProfileError, load_channel_config, resolve_channel_config
 from jobflow_environment import console_dependencies_ready
 from jobflow_screening import profile_summary
@@ -34,13 +35,29 @@ class OnboardingTests(unittest.TestCase):
             shutil.copytree(BIN.parent / name, self.system / name)
         env = patch.dict(os.environ, {"JOBFLOW_PROFILE_DIR": str(self.profile),
                                       "JOBFLOW_RUNTIME_DIR": str(self.base / "runtime"),
+                                      "JOBFLOW_TOOLS_DIR": str(self.base / "tools"),
+                                      "JOBFLOW_APPLICATIONS_DIR": str(self.base / "apps"),
+                                      "JOBFLOW_SYSTEM_APPLICATIONS_DIR": str(self.base / "system-apps"),
                                       "JOBFLOW_LANG": "zh",
                                       "JOBFLOW_CONSOLE_DIR": str(self.root / "console")})
         env.start()
         self.addCleanup(env.stop)
-        node = patch.object(doctor.subprocess, "run", return_value=subprocess.CompletedProcess([], 0, "v20.9.0\n", ""))
+        node = patch.object(environment.subprocess, "run", return_value=subprocess.CompletedProcess([], 0, "v20.9.0\n", ""))
         node.start()
         self.addCleanup(node.stop)
+        for mock in (patch.object(doctor, "xcode_clt_ready", return_value=True),
+                     patch.object(doctor.platform, "system", return_value="Darwin")):
+            mock.start()
+            self.addCleanup(mock.stop)
+        node_path = self.base / "path"
+        node_path.mkdir()
+        for name in ("node", "npm"):
+            executable = node_path / name
+            executable.write_text("#!/bin/sh\necho v20.9.0\n")
+            executable.chmod(0o755)
+        path_env = patch.dict(os.environ, {"PATH": str(node_path) + os.pathsep + os.environ.get("PATH", "")})
+        path_env.start()
+        self.addCleanup(path_env.stop)
         self.goals = json.loads((self.system / "examples/screening/goals.example.json").read_text())
 
     def write(self, name, value):
@@ -216,13 +233,13 @@ class OnboardingTests(unittest.TestCase):
         self.ready()
         with patch.object(doctor.sys, "version_info", (3, 8, 9)):
             self.assertEqual(self.checks()["python"]["status"], "missing")
-        for version, expected in (("v20.8.9", "warn"), ("v20.9.0", "ok"), ("v22.0.0", "ok"), ("broken", "warn")):
-            with patch.object(doctor.subprocess, "run", return_value=subprocess.CompletedProcess([], 0, version)):
+        for version, expected in (("v20.8.9", "missing"), ("v20.9.0", "ok"), ("v22.0.0", "ok"), ("broken", "missing")):
+            with patch.object(environment.subprocess, "run", return_value=subprocess.CompletedProcess([], 0, version)):
                 self.assertEqual(self.checks()["node"]["status"], expected)
         for error in (FileNotFoundError(), subprocess.TimeoutExpired("node", 5)):
-            with patch.object(doctor.subprocess, "run", side_effect=error):
+            with patch.object(environment.subprocess, "run", side_effect=error):
                 self.assertTrue(doctor.check_readiness(self.root)["ready"])
-                self.assertEqual(self.checks()["node"]["status"], "warn")
+                self.assertEqual(self.checks()["node"]["status"], "missing")
 
     def test_channel_defaults_overrides_and_cli(self):
         for name in CHANNEL_CONFIGS:

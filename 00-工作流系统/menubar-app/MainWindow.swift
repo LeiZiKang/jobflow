@@ -127,7 +127,8 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, WKNaviga
         status.append(NSAttributedString(string: "控制台\(stateText)", attributes: [.foregroundColor: NSColor.labelColor]))
         statusLabel.attributedStringValue = status
 
-        var parts = ["已验证投递 \(progress.verified) / \(progress.target)", "待审核草稿 \(progress.pendingReviews)"]
+        let count = progress.target.map { "\(progress.verified) / \($0)" } ?? "\(progress.verified)"
+        var parts = ["已验证投递 \(count)", "待审核草稿 \(progress.pendingReviews)"]
         if progress.awaitingUser > 0 { parts.append("等你拍板 \(progress.awaitingUser)") }
         progressLabel.stringValue = parts.joined(separator: "  ·  ")
 

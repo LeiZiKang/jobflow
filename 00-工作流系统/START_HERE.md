@@ -16,6 +16,8 @@
 纯引擎开发使用临时 profile/runtime 做验收，无需开发者填写真实资料。
 英文用户改读 [English onboarding](runbooks/onboarding.en.md)。
 
+目前只支持 macOS。环境缺项按首次使用 runbook 逐项说明安装内容、用途、官方来源、大约大小、位置和卸载方法，用户明确同意后才运行 `./00-工作流系统/scripts/setup.sh --yes <item>`。拒绝就跳过，不反复劝；也可让用户运行 setup.sh 交互模式。新 Mac 无 git / python3 时，先征得同意触发 Apple 命令行工具安装，用户完成后再检测。管理员密码与系统弹窗由用户本人处理，不读、不输入、不缓存密码；不改 shell 配置、代理、网络或系统设置。Agent 的命令确认或沙箱限制是正常授权提示，受限时交还用户在终端运行。
+
 0. 想先看全貌：用浏览器打开 `00-工作流系统/系统架构.html`——分层、角色、派活方式、
    状态机、证据等级、审批门和当前实现进度都在里面。看完再按下面顺序走。
 1. 完整读取 `00-工作流系统/CONSTITUTION.md`。
@@ -56,6 +58,8 @@
 | 东西 | 默认位置 | 覆盖用的环境变量 |
 |---|---|---|
 | 个人目标、渠道配置、访谈与可选身份 | `~/.config/jobflow/profile/` | `JOBFLOW_PROFILE_DIR` |
+| 私有 Node / npm 缓存 | `~/.local/share/jobflow/tools` | `JOBFLOW_TOOLS_DIR` |
+| 用户 App 安装目录 | `~/Applications` | `JOBFLOW_APPLICATIONS_DIR` |
 | jobflowd 运行产物（SQLite / token / pid） | `~/.local/state/jobflow` | `JOBFLOW_RUNTIME_DIR` |
 
 仓库内：

@@ -4,6 +4,16 @@ set -euo pipefail
 
 CONTROL_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "$CONTROL_DIR/../.." && pwd)"
+source "$ROOT/00-工作流系统/scripts/node-path.sh"
+if ! jobflow_node_path; then
+  echo "需要 Node >= 20.9；可以运行 00-工作流系统/scripts/setup.sh 逐项同意安装。" >&2
+  exit 1
+fi
+# Read-only resolver hook for offline verification, before runtime writes.
+if [ "${1:-}" = --resolve-node ]; then
+  command -v node
+  exit 0
+fi
 # runtime 放 SQLite run ledger、bearer token、pid、lock。它在工作树之外：
 # 是运行产物不是仓库内容，而且 token 放在树外就不可能被误提交。
 # 规则与 bin/jobflow_paths.py 一致，改一边就要改另一边。
@@ -58,7 +68,7 @@ fi
 printf '%s\n' "$$" > "$PID_FILE"
 rm -f "$RUNTIME_DIR/control-token"
 
-PYTHONPYCACHEPREFIX="${JOBFLOW_PYCACHE:-/private/tmp/jobflow-pycache}" \
+PYTHONPYCACHEPREFIX="${JOBFLOW_PYCACHE:-${PYTHONPYCACHEPREFIX:-/tmp/jf-pyc}}" \
   python3 "$CONTROL_DIR/jobflowd.py" \
   --repo "$ROOT" \
   --port "$CONTROL_PORT" \
@@ -101,7 +111,7 @@ fi
 
 if [ ! -x "$WEB_DIR/node_modules/.bin/next" ]; then
   echo "Web Console 依赖尚未安装。请运行：" >&2
-  echo "  cd '$WEB_DIR' && npm install" >&2
+  echo "  00-工作流系统/scripts/setup.sh（逐项同意安装 / per-item consent）" >&2
   exit 1
 fi
 

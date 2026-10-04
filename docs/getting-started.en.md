@@ -4,11 +4,22 @@
 
 Prepare your goals, resume, and preferred job sites. Then let your agent guide you through setup. You do not need every answer in advance.
 
+## The easiest way to start
+
+Currently only macOS is supported. You only need to install the [Claude desktop app](https://claude.ai/download) (Code tab) or [Codex](https://chatgpt.com/codex), then tell your agent:
+
+> Clone https://github.com/LeiZiKang/jobflow locally, then help me initialize it.
+
+The agent can handle cloning too. It checks everything else and asks item by item, explaining what it installs, why, the official source, approximate size, destination, and how to uninstall. If you decline, it skips that item without asking again.
+On a new Mac without git / python3, it first obtains consent to trigger `xcode-select --install`. You complete the Apple Command Line Tools dialog, then it continues cloning and setup.
+You handle administrator passwords, system dialogs, and platform sign-ins yourself. No shell configuration, proxy, network, or system settings are changed.
+
+
 ## What to prepare
 
 | Item | Requirement |
 |---|---|
-| System | macOS or Linux, with Git installed |
+| System | Currently macOS only; install the agent first, consent to other tools individually |
 | Python | 3.9 or later; the engine uses only the standard library |
 | Agent | Claude Code, Codex, or another agent that can work in a local repository |
 | Node | 20.9 or later, only for the console |
@@ -17,13 +28,38 @@ Prepare your goals, resume, and preferred job sites. Then let your agent guide y
 | Resume | At least one PDF, Markdown, JSON, DOCX, or TXT file |
 | Optional material | Portfolio links, ongoing conversations or applications, identity details |
 
-Use the [ego lite website](https://lite.ego.app/) for installation. Its official installation script currently supports macOS only. The browser lets agents reuse your own signed-in sessions. After installing it, make sure your agent has the `ego-browser` skill and the `ego-browser` command is on PATH.
+Use the [ego lite website](https://lite.ego.app/) for installation. With consent, setup.sh installs its official DMG. The browser lets agents reuse your own signed-in sessions. After installing it, make sure your agent has the `ego-browser` skill and the `ego-browser` command is on PATH.
 
-You can set up jobflow without it. Your agent will be limited to public pages in a browser that is not signed in, so much of the content on recruiting platforms may be unavailable. On Linux, you can start with the CLI and public pages. The agent will not install system software or silently switch browsing methods.
+You can set up jobflow without it. Your agent will be limited to public pages in a browser that is not signed in, so much of the content on recruiting platforms may be unavailable. The agent asks before installing software and does not silently switch browsing methods.
 
 Possible channels include BOSS直聘 (BOSS Zhipin), 猎聘 (Liepin), LinkedIn, Indeed, 前程无忧 (51job), and company careers sites or applicant tracking systems (ATS). Sign in only to the sites you intend to use. Handle passwords and verification codes yourself; never give them to the agent. Checking job-related email or Slack messages requires separate agreement on scope.
 
 Place your resume in `03-简历/` (resumes); subfolders are supported. README files do not count. The agent reads the original facts and asks before adapting application materials. Do not add identity documents, passwords, or other secrets.
+
+## Check the environment and install with consent
+
+From the repository root, run `./00-工作流系统/scripts/setup.sh --check`. It reuses doctor without changes; exit 1 means required setup is incomplete. Without working Python it reports that doctor cannot run and other checks are unknown.
+Run `./00-工作流系统/scripts/setup.sh` for interactive setup. Each explanation is followed by `[y/N]`; Enter skips.
+An agent may use `./00-工作流系统/scripts/setup.sh --yes <item>` **only after explicit user consent for that item in the conversation**. It installs one item, never an implicitly approved bundle.
+
+| item | Source, purpose, destination | Estimated size and removal |
+|---|---|---|
+| `xcode_clt` | Apple Command Line Tools provide git / python3, not full Xcode; [Apple](https://developer.apple.com/download/all/) system installer; `/Library/Developer/CommandLineTools` | About 1–3 GB download and several GB installed; Apple gives the actual size. User removes the tools directory and handles admin authentication |
+| `node` | [Official Node.js](https://nodejs.org/) LTS for arm64 / x64; verify matching `SHASUMS256.txt`; `JOBFLOW_TOOLS_DIR/node` | About 40–70 MB download, 150–250 MB installed; remove that node directory |
+| `console_dependencies` | Console packages from the [official npm registry](https://registry.npmjs.org/); `npm ci` when a lockfile exists; `console/node_modules` | About 100–500 MB download, 0.5–1 GB installed; remove node_modules and `JOBFLOW_TOOLS_DIR/npm-cache` |
+| `ego_browser` | Official [ego lite](https://lite.ego.app/) DMG → `~/Applications`; skip if the app or command exists | Estimate 200–500 MB download, 0.5–1 GB installed, varies by release; quit and move app to Trash; manage browser data in the app |
+| `menubar_app` | Optional; fixed latest asset `Jobflow.dmg` from [GitHub Releases](https://github.com/LeiZiKang/jobflow/releases) → `~/Applications/Jobflow.app` | Estimate 1–30 MB, depends on release; quit and move app to Trash |
+
+`JOBFLOW_TOOLS_DIR` defaults to `~/.local/share/jobflow/tools`. A qualified Node ≥ 20.9 on PATH takes precedence. Otherwise doctor, check-all, and console launchers automatically use the private node. No Homebrew, sudo, or `.zshrc` / `.zprofile` edits.
+`JOBFLOW_APPLICATIONS_DIR` overrides the user app destination; `JOBFLOW_SYSTEM_APPLICATIONS_DIR` overrides system app discovery (default `/Applications`). Tests use temporary locations for both.
+
+After installing ego lite, follow its first-run setup and enable the agent-side `ego-browser` skill. Finding an app does not verify the skill or platform sign-ins.
+The Jobflow menu bar app is not notarized. If Gatekeeper blocks first launch, right-click → Open, or System Settings → Privacy & Security → Open Anyway. Do not disable Gatekeeper. Select the repository folder on first launch. Developers can still build with `./00-工作流系统/menubar-app/build.sh`.
+
+Claude Code may ask to confirm commands. Codex's default sandbox may block networking or home-directory writes; the user can grant access or run the interactive script in Terminal. These are normal permission steps. The installer only opens system dialogs; passwords are never read, entered, or cached by the agent or script.
+Download failures report network, HTTP, or certificate errors and the manual sources above, without repeated retries or proxy changes. Doctor runs after each installation. For Apple's installer, wait until the user confirms completion before checking again. `--check` uses doctor's readiness exit code. Installation mode exit 0 means no execution failure; `pending-user` still awaits the user and does not mean the workspace is ready.
+Personal-data checks cannot be installed and have `install: null`; complete them through onboarding.
+
 
 ## What the first conversation covers
 
@@ -45,6 +81,8 @@ Unanswered questions stay null or undecided in your personal `onboarding.json`. 
 ## Start manually and check readiness
 
 Clone the repository and enter it:
+
+Manual route: if git / python3 is unavailable, run `xcode-select --install` in Terminal and complete the Apple dialog yourself.
 
 ```bash
 git clone https://github.com/LeiZiKang/jobflow.git
@@ -80,7 +118,7 @@ python3 00-工作流系统/bin/jobflow.py doctor --lang en --json
 ./00-工作流系统/scripts/check-all.sh
 ```
 
-Doctor has **five required checks**: Python, initialized state, valid goals that differ from the example, a resume, and a personal channels override. All must be ok for exit code 0; otherwise it returns 1. Missing Node, console dependencies, ego-browser, or identity.json only produces warnings. Console dependencies pass only when both `console/node_modules/.bin/tsc` and `.bin/next` exist and are executable. An empty or incomplete install produces a warning: rerun `(cd "console" && npm install)`. Doctor and check-all share this check. Installed dependencies do not prove that the build passes.
+Doctor has **seven required checks**: macOS, Xcode Command Line Tools, Python, initialized state, valid goals that differ from the example, a resume, and a personal channels override. All must be ok for exit code 0; otherwise it returns 1. Node absence is marked missing; Node, console dependencies, ego-browser, the menu bar app, and identity.json remain optional. Console dependencies pass only when both `console/node_modules/.bin/tsc` and `.bin/next` exist and are executable. An empty or incomplete install produces a warning: rerun `./00-工作流系统/scripts/setup.sh`. Doctor and check-all share this check. Installed dependencies do not prove that the build passes.
 
 Doctor prints no goals or identity content and does not sign in to websites. The config command does print your selected channel configuration; do not paste it into a public issue.
 
@@ -114,10 +152,10 @@ Init copies a neutral template with placeholders. Customize its content and pass
 Yes. identity.json is only needed when preparing application materials. It is not required for search or readiness.
 
 **Can I start without Node or console dependencies?**
-Yes, use the CLI. When you want the console, install Node 20.9+, run `cd console && npm install`, return to the repository root, and run `./00-工作流系统/local-control/start.sh`. Open `http://127.0.0.1:8788`. Use the launcher instead of `npm run dev` so the local service is connected.
+Yes, use the CLI. When you want the console, install Node 20.9+, run `./00-工作流系统/scripts/setup.sh`, return to the repository root, and run `./00-工作流系统/local-control/start.sh`. Open `http://127.0.0.1:8788`. Use the launcher instead of `npm run dev` so the local service is connected.
 
 **ego-browser passes, but a platform still asks me to sign in.**
-The check only confirms that the command exists. Skill availability and active logins must be checked in the current session. You handle sign-in yourself.
+The check only confirms that the command or app exists. Skill availability and active logins must be checked in the current session. You handle sign-in yourself.
 
 **What if check-all fails?**
 Confirm that init has completed, then inspect the first error. Share a version of the error without personal data with your agent. Do not fabricate data to pass. Without console dependencies, the TypeScript check is skipped with a warning; install them for full console validation.

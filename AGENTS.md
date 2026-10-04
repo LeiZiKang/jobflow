@@ -4,6 +4,8 @@
 
 先运行 `python3 00-工作流系统/bin/jobflow.py doctor`。如果 `00-工作流系统/state/current.json` 不存在，或 doctor 必需项不全（退出码 1），先读 `00-工作流系统/runbooks/首次使用.md`，分阶段带用户补齐准备。已有 state 时不重复 init。纯引擎开发使用临时 profile/runtime 验收，不要求开发者填写真实求职资料。
 
+目前只支持 macOS。环境缺项按首次使用 runbook 逐项说明安装内容、用途、官方来源、大约大小、位置和卸载方法，用户明确同意后才运行 `./00-工作流系统/scripts/setup.sh --yes <item>`。拒绝就跳过，不反复劝；也可让用户运行 setup.sh 交互模式。新 Mac 无 git / python3 时，先征得同意触发 Apple 命令行工具安装，用户完成后再检测。管理员密码与系统弹窗由用户本人处理，不读、不输入、不缓存密码；不改 shell 配置、代理、网络或系统设置。Agent 的命令确认或沙箱限制是正常授权提示，受限时交还用户在终端运行。
+
 For English-speaking users, follow [the English onboarding runbook](00-工作流系统/runbooks/onboarding.en.md) and [getting started](docs/getting-started.en.md). The Chinese and English onboarding runbooks are equivalent; the Chinese version takes precedence if they differ.
 
 ## 红线

@@ -6,6 +6,17 @@ A repository-based job-search workflow for AI agents.
 
 Goals, progress, evidence, and approvals each have a defined home. A new agent or session can pick up from the files. Plans, agent claims, repository records, and verified platform results are recorded separately. You approve applications, messages, profile edits, and other external actions before they happen.
 
+## The easiest way to start
+
+Currently only macOS is supported. You only need to install the [Claude desktop app](https://claude.ai/download) (Code tab) or [Codex](https://chatgpt.com/codex), then tell your agent:
+
+> Clone https://github.com/LeiZiKang/jobflow locally, then help me initialize it.
+
+The agent can handle cloning too. It checks everything else and asks item by item, explaining what it installs, why, the official source, approximate size, destination, and how to uninstall. If you decline, it skips that item without asking again.
+On a new Mac without git / python3, it first obtains consent to trigger `xcode-select --install`. You complete the Apple Command Line Tools dialog, then it continues cloning and setup.
+You handle administrator passwords, system dialogs, and platform sign-ins yourself. No shell configuration, proxy, network, or system settings are changed.
+
+
 ## How it works
 
 - The repository holds state, tasks, evidence, and reports. Personal goals and channel settings live outside it.
@@ -18,14 +29,16 @@ Goals, progress, evidence, and approvals each have a defined home. A new agent o
 
 Read the [getting-started guide](docs/getting-started.en.md). Think about your goals, weights, deal-breakers, and preferred channels.
 
-- macOS or Linux, Git, and Python 3.9+. The engine uses only the standard library.
+- Currently only macOS is supported. Install your agent first; it checks other prerequisites and asks before installing each. Python 3.9+ uses only the standard library.
 - Claude Code, Codex, or another agent that can open a local repository.
 - At least one resume in `03-简历/` (resumes): PDF, Markdown, JSON, DOCX, or TXT.
-- [ego lite](https://lite.ego.app/) and the agent-side `ego-browser` skill are recommended to reuse your signed-in browser sessions. The official installation script currently supports macOS only. Without it, agents can only read public pages in a browser that is not signed in.
+- [ego lite](https://lite.ego.app/) and the agent-side `ego-browser` skill are recommended to reuse your signed-in browser sessions. With consent, setup.sh installs its official DMG. Without it, agents can only read public pages in a browser that is not signed in.
 - Choose channels such as BOSS直聘 (BOSS Zhipin), 猎聘 (Liepin), LinkedIn, Indeed, 前程无忧 (51job), or company careers sites / ATS. Sign in yourself. The agent never handles your passwords or verification codes.
-- Optional: Node 20.9+ for the console; Xcode Command Line Tools for the macOS menu bar app; portfolio links, existing opportunities, and identity.json.
+- Optional: Node 20.9+ for the console; the menu bar app is a download; portfolio links, existing opportunities, and identity.json.
 
 ## Quick start
+
+Manual route: if git / python3 is unavailable, run `xcode-select --install` in Terminal and complete the Apple dialog yourself.
 
 ```bash
 git clone https://github.com/LeiZiKang/jobflow.git
@@ -52,7 +65,7 @@ python3 00-工作流系统/bin/jobflow.py doctor --lang en --json
 ./00-工作流系统/scripts/check-all.sh
 ```
 
-**Ready** means every required doctor check is ok and check-all passes. Doctor does not print goals or identity content. Missing Node, console dependencies, ego-browser, or identity.json only produces warnings and does not change doctor's exit code. Both `.bin/tsc` and `.bin/next` must be executable for console dependencies to pass; incomplete installs need another npm install. An unanswered `foreign_first` stays null: scoring works without ownership-based sorting. Platform logins and actual access still need verification. Start with one manual, read-only job search.
+**Ready** means every required doctor check is ok and check-all passes. Doctor does not print goals or identity content. Node absence is marked missing; Node, console dependencies, ego-browser, the menu bar app, and identity.json are optional and do not change doctor's exit code. Both `.bin/tsc` and `.bin/next` must be executable for console dependencies to pass; incomplete installs need setup.sh with per-item consent. An unanswered `foreign_first` stays null: scoring works without ownership-based sorting. Platform logins and actual access still need verification. Start with one manual, read-only job search.
 
 To explore fictional demo data first:
 
@@ -67,15 +80,14 @@ Reset backs up existing core state to `00-工作流系统/.init-backup-*`. Busin
 ## Open the console
 
 ```bash
-cd console && npm install
-cd ..
+./00-工作流系统/scripts/setup.sh  # 逐项同意 / per-item consent
 ./00-工作流系统/local-control/start.sh
 ```
 
 Open `http://127.0.0.1:8788`. On macOS, you can also double-click `打开本地求职控制台.command` (open the local job-search console). Use the launcher instead of `npm run dev`; it connects the local service.
 
 For a read-only dashboard without Node: `./打开看板.command` (open dashboard).
-For the macOS menu bar app: `./00-工作流系统/menubar-app/build.sh`.
+Optional menu bar app: consent in setup.sh to install [Jobflow.dmg](https://github.com/LeiZiKang/jobflow/releases/latest/download/Jobflow.dmg) into `~/Applications`. It is not notarized: if blocked, right-click → Open or use System Settings → Privacy & Security → Open Anyway. Choose the repository on first launch. Developers can still use `./00-工作流系统/menubar-app/build.sh`.
 
 Daily and scheduling runbooks, templates, and generated reports are currently mainly in Chinese. Your agent can translate and explain them. Doctor supports `--lang en` or `--lang zh`; without the flag it uses JOBFLOW_LANG, then LANG (zh-prefixed locales use Chinese; others use English).
 

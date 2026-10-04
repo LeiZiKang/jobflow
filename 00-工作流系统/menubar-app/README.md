@@ -3,14 +3,42 @@
 原生 AppKit App（菜单栏常驻 + 主窗口），托管 `../local-control/start.sh`（jobflowd + Next.js 控制台），
 不复制启动逻辑。安装在 `~/Applications/求职控制台.app`，构建产物不进工作树。
 
+## 下载安装
+
+支持 macOS 13+，同时支持 Apple Silicon 和 Intel。
+从 [最新 Release 下载 Jobflow.dmg](https://github.com/LeiZiKang/jobflow/releases/latest/download/Jobflow.dmg)，
+打开 DMG，把「求职控制台.app」拖进 Applications。无需自己编译 App。
+
+App 使用 ad-hoc 签名，未经 Apple 公证。首次打开如果被 Gatekeeper 拦截，
+到「系统设置 → 隐私与安全性」找到刚被拦截的 App，点击「仍要打开」，再确认打开。
+较早的 macOS 也可在 Finder 中右键 App →「打开」。只对你信任的下载执行此操作。
+
+DMG 仅包含菜单栏 App，不包含仓库、Node.js、Python 或控制台依赖。
+先下载或 clone jobflow 仓库，按仓库新手指南准备 Python 3、Node.js 22 和工作区，
+并在 `console/` 执行 `npm ci`。预编译 App 不需要 Swift 编译工具链；运行引擎仍需要上述环境。
+首次启动会弹出文件夹选择器，选择包含 `00-工作流系统/local-control/start.sh` 的仓库根目录。
+取消选择不会启动服务，可稍后通过「启动控制台」或「更换仓库文件夹…」重新选择。
+
+路径按顺序取第一个有效值：`JOBFLOW_REPO` 环境变量 → UserDefaults 保存的路径 →
+开发者构建写入 Info.plist 的 `JobflowRepo`。都无效时重新选择。
+搬家后无需重新编译。在菜单里先停止控制台，再选「更换仓库文件夹…」，然后启动控制台。
+显式设置的 `JOBFLOW_REPO` 在下次启动时仍有最高优先级。
+
+## 开发者构建
+
+需要 Xcode Command Line Tools（`xcode-select --install`）。
+
 ```bash
-./00-工作流系统/menubar-app/build.sh   # 编译、ad-hoc 签名、覆盖安装（会先退出旧实例）
+./00-工作流系统/menubar-app/build.sh
+# 默认编译当前架构、ad-hoc 签名并覆盖安装到 ~/Applications/求职控制台.app
+# 会先退出旧实例；JOBFLOW_MENUBAR_APP 可覆盖安装位置。
+
+./00-工作流系统/menubar-app/build.sh --dmg /tmp/jf/Jobflow.dmg
+# 分别编译 arm64 / x86_64，lipo 合并、签名并打包；不安装、不退出本机 App。
 ```
 
-只支持 macOS 13+，需要 Xcode Command Line Tools（`xcode-select --install`）。
-编译时会把**当前仓库路径**写进 App 的 Info.plist（`JobflowRepo`），所以仓库搬家后要重新运行一次 `build.sh`；
-临时指向别的仓库可以设环境变量 `JOBFLOW_REPO`。App 是 ad-hoc 签名，只适合在本机自己编译自己用，不要分发二进制。
-首次运行前先在 `console/` 里执行一次 `npm install`。
+DMG 不嵌入构建机仓库路径，包含 App 和指向 `/Applications` 的快捷方式。
+推送 `v*` 标签会运行 release workflow，创建同名 Release（若不存在），并上传固定资产名 `Jobflow.dmg`。
 
 - 菜单栏显示 `已验证投递/目标`，数据与 `jobflow.py status` 同源（`state/current.json` 的 metrics），每 5 秒刷新。
 - 菜单：控制台状态、待审核草稿数、打开控制台（`127.0.0.1:8788`，默认浏览器）、复制控制台地址（粘到任意浏览器）、

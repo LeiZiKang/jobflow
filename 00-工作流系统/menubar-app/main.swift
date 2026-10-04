@@ -9,14 +9,22 @@ import ServiceManagement
 
 let home = FileManager.default.homeDirectoryForCurrentUser.path
 let env = ProcessInfo.processInfo.environment
-// 仓库位置：环境变量优先，其次是 build.sh 编译时写进 Info.plist 的 JobflowRepo。
-let repoDir = env["JOBFLOW_REPO"]
-    ?? (Bundle.main.object(forInfoDictionaryKey: "JobflowRepo") as? String)
-    ?? "\(home)/jobflow"
+// 按优先级选第一个有效仓库；分发版不嵌入构建机路径。
+func validRepository(_ path: String) -> Bool {
+    var isDirectory: ObjCBool = false
+    let script = "\(path)/00-工作流系统/local-control/start.sh"
+    return !path.isEmpty && path.hasPrefix("/")
+        && FileManager.default.fileExists(atPath: script, isDirectory: &isDirectory)
+        && !isDirectory.boolValue && FileManager.default.isReadableFile(atPath: script)
+}
+
+var repoDir = [env["JOBFLOW_REPO"], UserDefaults.standard.string(forKey: "JobflowRepo"),
+               Bundle.main.object(forInfoDictionaryKey: "JobflowRepo") as? String]
+    .compactMap { $0 }.first(where: validRepository) ?? ""
 let runtimeDir = env["JOBFLOW_RUNTIME_DIR"] ?? "\(home)/.local/state/jobflow"
 let webPort = env["JOBFLOW_WEB_PORT"] ?? "8788"
 let webURL = URL(string: "http://127.0.0.1:\(webPort)/")!
-let startScript = "\(repoDir)/00-工作流系统/local-control/start.sh"
+var startScript: String { "\(repoDir)/00-工作流系统/local-control/start.sh" }
 let logPath = "\(runtimeDir)/menubar-console.log"
 
 enum ServiceState { case stopped, starting, running, external }
@@ -90,6 +98,7 @@ struct Progress {
 
 func loadProgress() -> Progress {
     var p = Progress()
+    guard validRepository(repoDir) else { return p }
     let state = "\(repoDir)/00-工作流系统/state"
     func json(_ name: String) -> [String: Any]? {
         guard let data = FileManager.default.contents(atPath: "\(state)/\(name)") else { return nil }
@@ -144,8 +153,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
 
         console.onExit = { [weak self] _ in self?.poll() }
+        if !validRepository(repoDir) { selectRepository() }
         progress = loadProgress()
-        startService()
+        if validRepository(repoDir) { startService() }
         timer = Timer.scheduledTimer(withTimeInterval: 5, repeats: true) { [weak self] _ in self?.poll() }
         poll()
         NSApp.mainMenu = buildMainMenu()
@@ -216,6 +226,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     // MARK: service
 
     func startService() {
+        guard validRepository(repoDir) else {
+            selectRepository()
+            guard validRepository(repoDir) else { return }
+            startService()
+            return
+        }
         wantRunning = true
         guard !console.isAlive else { return }
         do {
@@ -323,6 +339,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             menu.addItem(item("重启控制台", #selector(restartService)))
             menu.addItem(item("停止控制台", #selector(stopService)))
         }
+        menu.addItem(item("更换仓库文件夹…", #selector(changeRepository)))
         menu.addItem(item("查看日志", #selector(openLog)))
         menu.addItem(item("使用说明", #selector(openGuide)))
         menu.addItem(.separator())
@@ -345,6 +362,37 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         return i
     }
 
+    // 只允许在当前服务停止后切换，避免旧进程仍占用同一端口。
+    @objc func changeRepository() {
+        guard !console.isAlive && state == .stopped else {
+            alert("请先停止控制台", "在菜单里停止控制台后再更换仓库；由其他窗口启动的服务需在那里停止。")
+            return
+        }
+        selectRepository()
+        progress = loadProgress()
+        render()
+    }
+
+    func selectRepository() {
+        NSApp.activate(ignoringOtherApps: true)
+        let panel = NSOpenPanel()
+        panel.title = "选择 jobflow 仓库文件夹"
+        panel.message = "请选择包含 00-工作流系统/local-control/start.sh 的 jobflow 文件夹。"
+        panel.canChooseFiles = false
+        panel.canChooseDirectories = true
+        panel.allowsMultipleSelection = false
+        panel.canCreateDirectories = false
+        while panel.runModal() == .OK {
+            guard let url = panel.url, validRepository(url.path) else {
+                alert("这不是 jobflow 仓库", "所选文件夹需要包含 00-工作流系统/local-control/start.sh。")
+                continue
+            }
+            repoDir = url.path
+            UserDefaults.standard.set(repoDir, forKey: "JobflowRepo")
+            return
+        }
+    }
+
     @objc func openWeb() { NSWorkspace.shared.open(webURL) }
 
     @objc func copyWeb() {
@@ -353,10 +401,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     @objc func openReports() {
+        guard validRepository(repoDir) else { return }
         NSWorkspace.shared.open(URL(fileURLWithPath: "\(repoDir)/05-检索报告"))
     }
 
     @objc func openGuide() {
+        guard validRepository(repoDir) else { return }
         NSWorkspace.shared.open(URL(fileURLWithPath: "\(repoDir)/使用说明.html"))
     }
 

@@ -5,14 +5,14 @@ from __future__ import annotations
 import json
 import os
 from pathlib import Path
-import re
 import shutil
-import subprocess
 import sys
+import platform
 
 from jobflow_profile import ProfileError, load_channel_config, load_goals, profile_directory
 from jobflow_screening import ScreeningError, validate_goals
-from jobflow_environment import console_dependencies_ready, console_directory
+from jobflow_environment import (console_dependencies_ready, console_directory, resolve_node,
+                                 installed_app, xcode_clt_ready, resolve_npm)
 
 
 def profile_copy_command(source: str, name: str) -> str:
@@ -41,14 +41,22 @@ def check_readiness(repo_root: Path, *, lang: str | None = None) -> dict:
     root = repo_root.resolve()
     checks = []
 
-    def add(key, required, ok, fix, message=None):
+    def add(key, required, ok, fix, message=None, install=None, missing=False):
+        if install:
+            fix += tr(" 可以运行 `00-工作流系统/scripts/setup.sh` 让它帮你装（须逐项同意）。",
+                      " You can run `00-工作流系统/scripts/setup.sh` to install it with your per-item consent.")
         message = message or tr("已就绪", "Ready")
         checks.append({"id": key, "required": required,
-                       "status": "ok" if ok else "missing" if required else "warn",
+                       "status": "ok" if ok else "missing" if required or missing else "warn",
+                       "install": install,
                        "message": message if ok else fix,
                        "fix": tr('无需修复。', 'No action needed.') if ok else fix})
 
-    add("python", True, sys.version_info >= (3, 9), tr('请安装 Python 3.9 或更新版本，再运行 doctor。', 'Install Python 3.9 or later, then run doctor again.'))
+    add("python", True, sys.version_info >= (3, 9), tr('请安装 Python 3.9 或更新版本，再运行 doctor。', 'Install Python 3.9 or later, then run doctor again.'), install="xcode_clt")
+    add("macos", True, platform.system() == "Darwin", tr('目前只支持 macOS。', 'Currently only macOS is supported.'))
+    add("xcode_clt", True, xcode_clt_ready(),
+        tr('需要 Apple Xcode 命令行工具（非完整 Xcode），提供 git 和 python3。',
+           'Apple Xcode Command Line Tools (not full Xcode) provide git and python3.'), install="xcode_clt")
     add("workspace", True, (root / "00-工作流系统/state/current.json").is_file(),
         tr('运行 python3 00-工作流系统/bin/jobflow.py init。', 'Run python3 00-工作流系统/bin/jobflow.py init.'))
     goals_ok = False
@@ -91,20 +99,16 @@ def check_readiness(repo_root: Path, *, lang: str | None = None) -> dict:
         tr('确认渠道后复制并编辑：', 'After confirming your channels, copy the template and edit it: ') + profile_copy_command(
             "00-工作流系统/config/search_channels.json", "search_channels.json"))
 
-    node_ok = False
-    try:
-        node = subprocess.run(["node", "--version"], capture_output=True, text=True, timeout=5, check=False)
-        version = re.fullmatch(r"v?(\d+)\.(\d+)\.(\d+)", node.stdout.strip())
-        node_ok = node.returncode == 0 and version is not None and tuple(map(int, version.groups())) >= (20, 9, 0)
-    except (OSError, subprocess.TimeoutExpired, UnicodeError):
-        pass
-    add("node", False, node_ok, tr('控制台需要 Node 20.9 或更新版本；不用控制台可跳过。', 'The console needs Node 20.9 or later. Skip this if you do not need the console.'))
-    add("console_dependencies", False, console_dependencies_ready(console_directory(root)),
-        tr('控制台依赖缺失或不完整；请重新运行 (cd "${JOBFLOW_CONSOLE_DIR:-console}" && npm install)。',
-           'Console dependencies are missing or incomplete. Run (cd "${JOBFLOW_CONSOLE_DIR:-console}" && npm install) again.'))
-    add("ego_browser", False, shutil.which("ego-browser") is not None,
-        tr('没有它 Agent 只能用未登录浏览器，见 docs/新手指南.md；安装 ego lite 并启用 ego-browser skill。', 'Without ego-browser, the agent can only use a browser that is not signed in. See docs/getting-started.en.md; install ego lite and enable the ego-browser skill.'),
-        tr('命令已在 PATH；仍需确认 Agent skill 与平台登录态。', 'The command is on PATH. Agent skill availability and platform sign-ins still need verification.'))
+    node = resolve_node()
+    add("node", False, node is not None, tr('控制台需要 Node 20.9 或更新版本；不用控制台可跳过。', 'The console needs Node 20.9 or later. Skip this if you do not need the console.'), install="node", missing=True)
+    add("console_dependencies", False, console_dependencies_ready(console_directory(root)) and node is not None and resolve_npm(node) is not None,
+        tr('控制台依赖缺失或不完整，或没有可用 npm；安装使用 lockfile 的 npm ci。',
+           'Console dependencies are incomplete or npm is unavailable; installation uses npm ci with the lockfile.'), install="console_dependencies")
+    add("ego_browser", False, shutil.which("ego-browser") is not None or installed_app("ego_browser") is not None,
+        tr('安装 ego lite，再按应用引导启用 Agent 侧 ego-browser skill。', 'Install ego lite, then follow its onboarding to enable the agent-side ego-browser skill.'),
+        tr('已发现命令或 App；仍需用户完成首次设置，并核实 Agent skill 与平台登录态。', 'Command or app found; finish first-run setup and verify the agent skill and platform sign-ins.'), install="ego_browser")
+    add("menubar_app", False, installed_app("menubar_app") is not None,
+        tr('可选菜单栏 App 可从 GitHub Releases 安装，无需自己编译。', 'The optional menu bar app is available from GitHub Releases; no local build is needed.'), install="menubar_app")
     add("identity", False, identity_ok, tr('identity.json 可选，只在准备投递材料时按需填写。', 'identity.json is optional. Add it only when needed to prepare application materials.'))
     return {"ready": all(c["status"] == "ok" for c in checks if c["required"]), "checks": checks}
 

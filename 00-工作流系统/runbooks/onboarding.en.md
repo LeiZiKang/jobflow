@@ -14,18 +14,29 @@ Do not ask again for explicit permission already given for a specific write, and
 
 ## 0. Environment
 
+Currently only macOS is supported. Start with:
+
 ```bash
+python3 00-工作流系统/bin/jobflow.py doctor --lang en --json
+./00-工作流系统/scripts/setup.sh --check
+```
+
+Incomplete readiness is normal on first use. JSON does not print goals or identity content. Software checks have an `install` item name; personal-data checks have null. Python 3.9+ is required; Node 20.9+ is only for the console.
+A new Mac may lack working git / python3. Explain that Apple Xcode Command Line Tools (not full Xcode) provide both, obtain consent, then trigger `xcode-select --install`. If the repository is already present, setup.sh also has a Python-free bootstrap. Only open the dialog; the user completes it. Wait for the user to report completion before running doctor again. Without Python, other checks remain unknown.
+
+For each missing item, explain **what, why, official download source, approximate size, destination, and uninstall instructions**, then ask. See the [installation table](../../docs/getting-started.en.md#check-the-environment-and-install-with-consent). Order: `xcode_clt`, `node`, `console_dependencies`, `ego_browser`, optional `menubar_app`. Skip ready items. A refusal means skip without persuasion or implicit dependency installation.
+
+Only after explicit conversational consent for that item may the agent run (node is an example):
+
+```bash
+./00-工作流系统/scripts/setup.sh --yes node
 python3 00-工作流系统/bin/jobflow.py doctor --lang en
 ```
 
-`00-工作流系统` is the workflow system directory. A failed readiness check is normal on first use. If Python cannot run, check `python3 --version`. Python 3.9+ is required; Node 20.9+ is only needed for the console. Explain missing Python or Node requirements without installing system software yourself. `--json` returns structured results without goals or identity content.
-
-Ask, if still unknown:
-
-1. Are you using macOS or Linux, and which agent will you use?
-2. Would you like to skip missing optional components for now or prepare them later?
-
-Summarize the gaps and their impact. Do not write personal files in this stage.
+Alternatively the user can run `./00-工作流系统/scripts/setup.sh` in Terminal and answer each `[y/N]`. Choosing the console does not silently authorize all software. `--yes` is not a blanket unattended switch.
+Claude Code may show command approval. Codex's default sandbox may block networking or home-directory writes; the user must grant access or run the interactive script in Terminal. These are normal permission prompts, not restrictions to bypass.
+Only the user handles administrator passwords and system authorization dialogs. Neither agent nor script reads, enters, or caches passwords. Do not modify shell configuration, proxy, network, or system settings. On download failure, report the reason and official manual source without repeated retries or network changes.
+Recheck after each installation; an unfinished system dialog is pending-user. Do not ask about declined items again in later stages unless the user changes their decision. Summarize remaining gaps and effects. Do not write personal files at this stage.
 
 ## 1. Demo or empty workspace
 
@@ -121,7 +132,7 @@ Ask:
 3. Which sites have you signed into yourself, and which will you handle later?
 4. Which query groups and how many pages, or what stopping condition, should apply to each channel? Do you need a minimum number of company sites per day?
 
-Recommend ego lite because it reuses the user's own signed-in browser sessions. Its official installation script currently supports macOS only. The agent also needs the `ego-browser` skill. Doctor only checks for the command on PATH; it does not verify the skill or platform logins.
+Recommend ego lite because it reuses the user's own signed-in browser sessions. With consent, setup.sh installs the official DMG. Follow ego lite onboarding and enable the agent-side `ego-browser` skill. Doctor checks for a command on PATH or an installed app; it does not verify the skill or platform logins.
 
 Without it, the agent can only read public pages in a browser that is not signed in, and much platform content may be unavailable. Explain the limits and let the user decide. The user handles all sign-ins, passwords, and verification codes. The agent must not handle or bypass them.
 
@@ -161,8 +172,7 @@ Ask:
 After confirming console use:
 
 ```bash
-cd console && npm install
-cd ..
+./00-工作流系统/scripts/setup.sh  # 逐项同意 / per-item consent
 ./00-工作流系统/local-control/start.sh
 ```
 
@@ -175,7 +185,7 @@ python3 00-工作流系统/bin/jobflow.py doctor --lang en
 ./00-工作流系统/scripts/check-all.sh
 ```
 
-Say “ready” only when every required doctor check is ok (exit code 0) and check-all passes. Warnings do not change doctor's exit code, but explain their impact. Console dependencies are ready only when both `.bin/tsc` and `.bin/next` exist and are executable. An empty node_modules or incomplete installation needs another npm install. Passing the dependency check does not prove that the build passes. Readiness does not mean every platform is accessible or external actions are authorized.
+Say “ready” only when every required doctor check is ok (exit code 0) and check-all passes. Missing/warn optional items do not change doctor's exit code, but explain their impact. Console dependencies are ready only when both `.bin/tsc` and `.bin/next` exist and are executable. An empty node_modules or incomplete installation needs setup.sh with per-item consent. Passing the dependency check does not prove that the build passes. Readiness does not mean every platform is accessible or external actions are authorized.
 
 Summarize goals, weights, hard rules, channels, resumes and other files, undecided items, and remaining warnings. Ask:
 
