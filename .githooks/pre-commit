@@ -1,0 +1,5 @@
+#!/bin/bash
+set -euo pipefail
+ROOT="$(git rev-parse --show-toplevel)"
+"$ROOT/00-工作流系统/scripts/check-publishable.sh"
+exec "$ROOT/00-工作流系统/scripts/check-all.sh"

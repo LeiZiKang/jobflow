@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$comment": "Cross-field rules (weight sum, configured IDs, resolved evidence, contiguous control chain) are enforced by jobflow_screening.py.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "foreign_first": {
+      "type": "boolean"
+    },
+    "dimensions": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "label": {
+            "type": "string",
+            "minLength": 1
+          },
+          "weight": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "maximum": 100
+          },
+          "rubric": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "label",
+          "weight",
+          "rubric"
+        ]
+      }
+    },
+    "hard_rules": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "thresholds": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "reject_below": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "recommend_at": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "minimum_coverage": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        }
+      },
+      "required": [
+        "reject_below",
+        "recommend_at",
+        "minimum_coverage"
+      ]
+    }
+  },
+  "required": [
+    "schema_version",
+    "foreign_first",
+    "dimensions",
+    "hard_rules",
+    "thresholds"
+  ]
+}

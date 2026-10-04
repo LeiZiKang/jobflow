@@ -1,0 +1,208 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$comment": "Cross-field rules (weight sum, configured IDs, resolved evidence, contiguous control chain) are enforced by jobflow_screening.py.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "candidate_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "source": {
+            "type": "string",
+            "minLength": 1
+          },
+          "observed_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "note": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "source",
+          "observed_at",
+          "note"
+        ]
+      }
+    },
+    "dimensions": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "value": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0,
+            "maximum": 1
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1
+          },
+          "evidence_refs": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "uniqueItems": true
+          }
+        },
+        "required": [
+          "value",
+          "reason",
+          "evidence_refs"
+        ]
+      }
+    },
+    "hard_rules": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "status": {
+            "enum": [
+              "pass",
+              "fail",
+              "unknown"
+            ]
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1
+          },
+          "evidence_refs": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "uniqueItems": true
+          }
+        },
+        "required": [
+          "status",
+          "reason",
+          "evidence_refs"
+        ]
+      }
+    },
+    "ownership": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "status": {
+          "enum": [
+            "verified_foreign",
+            "verified_domestic",
+            "unknown"
+          ]
+        },
+        "legal_entity": {
+          "type": "string",
+          "minLength": 1
+        },
+        "ultimate_parent": {
+          "type": "string",
+          "minLength": 1
+        },
+        "parent_jurisdiction": {
+          "type": "string",
+          "minLength": 1
+        },
+        "control_chain": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "entity": {
+                "type": "string",
+                "minLength": 1
+              },
+              "controller": {
+                "type": "string",
+                "minLength": 1
+              },
+              "control_basis": {
+                "type": "string",
+                "minLength": 1
+              },
+              "share_percent": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100
+              },
+              "evidence_refs": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "uniqueItems": true
+              }
+            },
+            "required": [
+              "entity",
+              "controller",
+              "control_basis",
+              "evidence_refs"
+            ]
+          }
+        }
+      },
+      "required": [
+        "status"
+      ]
+    },
+    "employment": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": [
+            "own_product",
+            "outsourcing_delivery",
+            "unknown"
+          ]
+        },
+        "evidence_refs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "kind",
+        "evidence_refs"
+      ]
+    }
+  },
+  "required": [
+    "schema_version",
+    "candidate_id",
+    "evidence",
+    "dimensions",
+    "hard_rules"
+  ]
+}

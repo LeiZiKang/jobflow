@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "effective_date": "template",
+  "scope": "只读求职相关主动邀约、招聘方回复、面试安排和申请回执；不泛读无关内容，不发送。",
+  "sources": [
+    {
+      "source_id": "boss",
+      "enabled": true,
+      "adapter": "browser",
+      "entry": "https://www.zhipin.com/web/geek/chat",
+      "capability": "verify_each_run"
+    },
+    {
+      "source_id": "liepin",
+      "enabled": true,
+      "adapter": "ego-browser",
+      "entry": "https://www.liepin.com/",
+      "capability": "needs_current_verification"
+    },
+    {
+      "source_id": "linkedin",
+      "enabled": true,
+      "adapter": "browser",
+      "entry": "https://www.linkedin.com/messaging/",
+      "capability": "verify_each_run"
+    },
+    {
+      "source_id": "indeed",
+      "enabled": true,
+      "adapter": "browser",
+      "entry": "https://cn.indeed.com/",
+      "capability": "unverified"
+    },
+    {
+      "source_id": "51job",
+      "enabled": true,
+      "adapter": "browser",
+      "entry": "https://www.51job.com/",
+      "capability": "unverified"
+    },
+    {
+      "source_id": "email",
+      "enabled": true,
+      "adapter": "Apple Mail read-only automation",
+      "entry": "all configured Mail accounts / inboxes",
+      "capability": "requires_user_configured_mail_access"
+    },
+    {
+      "source_id": "slack",
+      "enabled": true,
+      "adapter": "connected Slack read-only connector",
+      "entry": "job-related DMs and mentions",
+      "capability": "requires_user_configured_connector"
+    }
+  ],
+  "official_ats": "邮箱覆盖ATS通知；已有申请的官网账户若有独立收件箱，按申请增加来源；不注册，不把申请状态当新消息。",
+  "new_sources": "每天核对可用连接与授权，将新增求职通信来源显式纳入清单；未连接/未授权列未接入，不虚报覆盖。",
+  "unsupported": "仅当页面或官方说明证明没有消息功能才记not_supported；登录或没找到入口不算。",
+  "authorization": "默认配置仅说明可接入来源；实际检查前需要用户明确授权，邮箱仅限求职相关。"
+}

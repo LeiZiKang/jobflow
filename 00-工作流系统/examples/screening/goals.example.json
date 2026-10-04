@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "foreign_first": true,
+  "dimensions": {
+    "technical_fit": {
+      "label": "技术与经验",
+      "weight": 30,
+      "rubric": "1=主要职责有实际经历支撑；0.5=部分匹配且有明显缺口；0=主线完全不符"
+    },
+    "wlb": {
+      "label": "工时与生活",
+      "weight": 25,
+      "rubric": "1=团队常态工时明确可接受；0.5=偶尔加班；0=长工时；没有团队证据=null"
+    },
+    "growth": {
+      "label": "成长环境",
+      "weight": 20,
+      "rubric": "1=成熟代码库、评审和资深同事；0.5=部分具备；0=单人独扛；未知=null"
+    },
+    "salary": {
+      "label": "薪资匹配",
+      "weight": 15,
+      "rubric": "虚构目标月薪16–22K；1=落在目标内或更好；0.5=略低；0=明显低于目标；未披露=null"
+    },
+    "culture_leave": {
+      "label": "文化与休假",
+      "weight": 10,
+      "rubric": "1=尊重员工、休假充足且团队证据支持；0.5=一般；0=明显不符；未知=null"
+    }
+  },
+  "hard_rules": {
+    "location": "虚构目标城市上海或可在上海远程",
+    "hours": "不接受常态晚十点后、996或大小周",
+    "team": "不接受单人移动端或独扛MVP"
+  },
+  "thresholds": {
+    "reject_below": 50,
+    "recommend_at": 75,
+    "minimum_coverage": 80
+  }
+}

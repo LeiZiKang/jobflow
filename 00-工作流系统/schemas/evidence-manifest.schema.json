@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local.invalid/jobflow/evidence-manifest.schema.json",
+  "title": "Jobflow Evidence Manifest",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "evidence_id",
+    "application_id",
+    "task_id",
+    "operation_type",
+    "occurred_at",
+    "executor",
+    "target",
+    "payload_artifacts",
+    "result",
+    "audit"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "evidence_id": {"type": "string", "pattern": "^ev-"},
+    "application_id": {"type": "string", "minLength": 1},
+    "task_id": {"type": "string", "minLength": 1},
+    "operation_type": {
+      "enum": ["read_only_audit", "application_submit", "external_send", "profile_change", "interview_confirmation"]
+    },
+    "occurred_at": {"type": "string", "format": "date-time"},
+    "approval_binding": {"type": ["object", "null"]},
+    "payload_artifacts": {"type": "array"},
+    "result": {
+      "type": "object",
+      "required": ["status", "proof_artifacts"],
+      "properties": {
+        "status": {"enum": ["executed_unverified", "verified_success", "verified_failure", "blocked"]},
+        "platform_readback": {"type": ["string", "null"]},
+        "proof_artifacts": {"type": "array"}
+      }
+    },
+    "audit": {"type": "object"}
+  }
+}

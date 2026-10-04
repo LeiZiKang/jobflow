@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local.invalid/jobflow/project-state.schema.json",
+  "title": "Jobflow Project State",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "project_id",
+    "updated_at",
+    "ultimate_goal",
+    "current_phase",
+    "metrics",
+    "next_action_ids"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "project_id": {
+      "const": "jobflow-open-workspace"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "ultimate_goal": {
+      "type": "string",
+      "minLength": 1
+    },
+    "current_phase": {
+      "type": "string",
+      "minLength": 1
+    },
+    "metrics": {
+      "type": "object",
+      "required": [
+        "submitted_verified",
+        "diagnostic_sample_target",
+        "gap_to_target"
+      ]
+    },
+    "next_action_ids": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    }
+  }
+}

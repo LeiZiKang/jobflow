@@ -1,0 +1,8 @@
+{
+  "schema_version": 1,
+  "display_name": "示例候选人",
+  "contact": {
+    "email": "candidate@example.com"
+  },
+  "note": "虚构示例；真实身份只能存于仓库外 identity.json，评分不会加载"
+}

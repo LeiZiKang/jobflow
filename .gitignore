@@ -1,0 +1,33 @@
+# ── macOS ──
+.DS_Store
+._*
+
+# ── 构建与临时产物 ──
+__pycache__/
+*.py[cod]
+tmp/
+console/node_modules/
+console/.next/
+console/*.tsbuildinfo
+console/next-env.d.ts.bak
+
+# ── Agent 私有目录 ──
+.agent-memory/
+.claude/settings.local.json
+
+# ── 个人数据（jobflow.py init 生成）──
+# 公开仓库里这一块必须保留，否则你的投递、简历、面试记录会被推上去。
+# 只有当你的副本放在【私有】仓库、并想版本化自己的求职数据时，才删掉这一块。
+00-工作流系统/state/
+00-工作流系统/events/
+00-工作流系统/evidence/
+00-工作流系统/approvals/
+00-工作流系统/DECIDER_BRIEF.md
+01-现在在做/
+02-策略/
+03-简历/
+04-面试/
+05-检索报告/
+assets/
+求职看板.html
+00-工作流系统/.init-backup-*/

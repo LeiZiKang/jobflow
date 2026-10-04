@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "effective_date": "template",
+  "required_daily": ["boss", "liepin", "linkedin", "indeed", "51job", "official_ats"],
+  "query_groups": [
+    {"id": "mobile", "terms": ["iOS", "Swift", "Mobile Engineer", "移动端"]},
+    {"id": "targeted_fullstack", "terms": ["TypeScript", "Node.js", "Full Stack Engineer"]}
+  ],
+  "minimum_coverage": "每个招聘平台至少执行 mobile 与 targeted_fullstack 两组上海/可上海远程查询，记录实际关键词、筛选、页数、时间和停止原因；首轮扩展不限制近48小时，此后增量并定期回看仍开放岗位。",
+  "official_ats": {
+    "definition": "当日明确列出的公司官方招聘网站/ATS直接检索；聚合搜索引擎摘要不算官网完成。",
+    "minimum_companies_per_day": 8,
+    "initial_company_roster": ["示例科技", "Acme Robotics", "Nova Data Labs", "Echo Labs", "Pixel Harbor"],
+    "rotation": "记录已查公司与方向；使用者应替换为自己的目标公司或公开来源；保留新旧列表，不声称穷尽所有官网。"
+  },
+  "deduplication": ["平台岗位ID与规范URL", "雇主+岗位+工作地+JD指纹", "全部历史candidates草稿", "canonical candidates与applications", "同岗多渠道保留来源别名而非新增候选"],
+  "completion": "六类渠道全部取得ok/empty才可completed；部分有效部分受阻是partial；登录、验证码、审批拒绝或工具故障是blocked原因，不能写成无岗位。",
+  "authorization": "默认配置仅描述只读检索范围；实际使用前需要用户在当前会话明确授权。不包含发送、申请、登录、接受条款或编辑平台资料。"
+}

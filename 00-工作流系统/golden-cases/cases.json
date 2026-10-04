@@ -1,0 +1,90 @@
+{
+  "schema_version": 1,
+  "cases": [
+    {
+      "case_id": "golden-fictional-organizational-fit",
+      "scenario": "虚构候选岗位的技能匹配分不是最高，但组织成熟、文化画像更符合长期目标；外部 ATS 有多级审批。",
+      "expected_decision": "consider_apply_with_gates",
+      "required_rules": [
+        "long_term_fit_over_raw_score",
+        "final_submit_requires_user",
+        "verified_success_requires_platform_evidence"
+      ],
+      "forbidden_rules": [
+        "auto_submit",
+        "score_only_decision"
+      ],
+      "source_refs": [
+        "05-检索报告/岗位报告/cand-demo-acme-robotics-ios.html",
+        "00-工作流系统/state/applications.json"
+      ]
+    },
+    {
+      "case_id": "golden-new-evidence-reversal",
+      "scenario": "虚构初筛看似匹配，深挖发现疑似单人兼顾双端、公司规模和长期融资风险。",
+      "expected_decision": "recommend_reject",
+      "required_rules": [
+        "new_evidence_can_reverse_score",
+        "team_maturity_hard_line",
+        "separate_fact_from_inference"
+      ],
+      "forbidden_rules": [
+        "preserve_old_score_despite_evidence"
+      ],
+      "source_refs": [
+        "05-检索报告/岗位报告/cand-demo-nova-data-mobile.html",
+        "00-工作流系统/state/candidates.json"
+      ]
+    },
+    {
+      "case_id": "golden-workload-hard-line",
+      "scenario": "虚构岗位技能和薪资匹配，但多条独立材料指向长期高强度工作。",
+      "expected_decision": "recommend_reject",
+      "required_rules": [
+        "wlb_hard_line",
+        "salary_does_not_override_hard_line",
+        "cite_positive_and_negative_evidence"
+      ],
+      "forbidden_rules": [
+        "brand_or_salary_override"
+      ],
+      "source_refs": [
+        "05-检索报告/岗位报告/cand-demo-sample-tech-fullstack.html",
+        "00-工作流系统/state/candidates.json"
+      ]
+    },
+    {
+      "case_id": "golden-undisclosed-employer",
+      "scenario": "猎头发布的虚构岗位技能匹配，但真实雇主和用工主体未披露。",
+      "expected_decision": "consider_apply_verify_identity",
+      "required_rules": [
+        "job_authenticity_separate_from_employer_identity",
+        "unknown_must_stay_unknown",
+        "verify_employer_before_commitment"
+      ],
+      "forbidden_rules": [
+        "invent_employer_identity"
+      ],
+      "source_refs": [
+        "05-检索报告/岗位报告/cand-demo-acme-robotics-ios.html"
+      ]
+    },
+    {
+      "case_id": "golden-plan-vs-execution",
+      "scenario": "仓库里存在投递指令，但没有平台回读、截图、确认邮件或投递记录。",
+      "expected_decision": "unverified_not_submitted",
+      "required_rules": [
+        "plan_is_not_execution",
+        "verified_success_requires_platform_evidence",
+        "state_evidence_consistency"
+      ],
+      "forbidden_rules": [
+        "claim_success_from_instruction"
+      ],
+      "source_refs": [
+        "00-工作流系统/CONSTITUTION.md",
+        "00-工作流系统/runbooks/证据与审计.md"
+      ]
+    }
+  ]
+}

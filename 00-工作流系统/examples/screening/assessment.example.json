@@ -1,0 +1,102 @@
+{
+  "schema_version": 1,
+  "candidate_id": "fictional-orbit-mobile",
+  "evidence": {
+    "jd": {
+      "source": "https://example.com/jobs/fictional-mobile",
+      "observed_at": "2026-09-22T12:00:00+08:00",
+      "note": "完全虚构的JD：上海团队，移动端开发，薪资符合示例目标"
+    },
+    "team": {
+      "source": "https://example.com/fictional-team",
+      "observed_at": "2026-09-22T12:00:00+08:00",
+      "note": "完全虚构的团队访谈：正常工时、有资深同事、定期评审"
+    },
+    "registry": {
+      "source": "https://example.com/fictional-ownership",
+      "observed_at": "2026-09-22T12:00:00+08:00",
+      "note": "完全虚构的工商材料，示范直接及最终控制关系，不可用于真实推荐"
+    }
+  },
+  "hard_rules": {
+    "location": {
+      "status": "pass",
+      "reason": "虚构证据满足该规则",
+      "evidence_refs": [
+        "jd"
+      ]
+    },
+    "hours": {
+      "status": "pass",
+      "reason": "虚构证据满足该规则",
+      "evidence_refs": [
+        "team"
+      ]
+    },
+    "team": {
+      "status": "pass",
+      "reason": "虚构证据满足该规则",
+      "evidence_refs": [
+        "team"
+      ]
+    }
+  },
+  "dimensions": {
+    "technical_fit": {
+      "value": 1,
+      "reason": "虚构正向证据",
+      "evidence_refs": [
+        "jd"
+      ]
+    },
+    "wlb": {
+      "value": 1,
+      "reason": "虚构正向证据",
+      "evidence_refs": [
+        "team"
+      ]
+    },
+    "growth": {
+      "value": 1,
+      "reason": "虚构正向证据",
+      "evidence_refs": [
+        "team"
+      ]
+    },
+    "salary": {
+      "value": 1,
+      "reason": "虚构正向证据",
+      "evidence_refs": [
+        "jd"
+      ]
+    },
+    "culture_leave": {
+      "value": null,
+      "reason": "尚无文化和休假证据",
+      "evidence_refs": []
+    }
+  },
+  "ownership": {
+    "status": "verified_foreign",
+    "legal_entity": "虚构星环上海有限公司",
+    "ultimate_parent": "Fictional Orbit Global Ltd",
+    "parent_jurisdiction": "示例外国辖区",
+    "control_chain": [
+      {
+        "entity": "虚构星环上海有限公司",
+        "controller": "Fictional Orbit Global Ltd",
+        "share_percent": 100,
+        "control_basis": "虚构证据显示全资控制且母公司在境外创立，不是仅海外上市",
+        "evidence_refs": [
+          "registry"
+        ]
+      }
+    ]
+  },
+  "employment": {
+    "kind": "outsourcing_delivery",
+    "evidence_refs": [
+      "jd"
+    ]
+  }
+}

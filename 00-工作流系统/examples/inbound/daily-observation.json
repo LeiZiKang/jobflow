@@ -1,0 +1,22 @@
+{
+  "date": "2026-09-22",
+  "window": {"start": "2026-09-21T09:00:00+08:00", "end": "2026-09-22T09:00:00+08:00"},
+  "required_sources": ["boss", "liepin", "linkedin", "indeed", "51job", "official_ats", "email", "slack"],
+  "sources": [
+    {"source_id": "boss", "status": "login_required", "observed_at": "2026-09-22T09:00:00+08:00", "reason": "虚构示例：停在登录提示，需本人恢复登录", "evidence_ref": "https://example.com/evidence/boss"},
+    {"source_id": "liepin", "status": "ok", "observed_at": "2026-09-22T09:00:00+08:00", "evidence_ref": "https://example.com/evidence/liepin", "counts": {"new_contact": 1, "application_reply": 1, "unknown": 1}},
+    {"source_id": "linkedin", "status": "approval_blocked", "reason": "虚构示例：本次访问被审批拒绝"},
+    {"source_id": "indeed", "status": "not_supported", "reason": "虚构示例：只支持公开岗位检索，没有已授权消息访问"},
+    {"source_id": "51job", "status": "captcha_blocked", "reason": "虚构示例：出现验证码后停止"},
+    {"source_id": "official_ats", "status": "not_supported", "reason": "虚构示例：没有统一收件箱，相关通知由邮箱检查"},
+    {"source_id": "email", "status": "ok", "observed_at": "2026-09-22T09:00:00+08:00", "evidence_ref": "https://example.com/evidence/email"},
+    {"source_id": "slack", "status": "unavailable", "reason": "虚构示例：连接不可用"}
+  ],
+  "items": [
+    {"id": "example-invite-1", "source_id": "liepin", "sender_role": "recruiter", "company": "示例公司（虚构）", "contact": "示例招聘人", "role": "iOS 工程师", "received_at": "2026-09-22T08:00:00+08:00", "summary": "虚构示例：邀请了解上海岗位", "kind": "new_contact", "source_ref": "https://example.com/message/invite-1", "recommendation": "先问清，客户和工时尚未核实", "action_needed": "本人决定是否回复"},
+    {"id": "example-reply-1", "source_id": "liepin", "sender_role": "employer", "company": "示例在途公司（虚构）", "contact": "示例 HR", "role": "移动端工程师", "received_at": "2026-09-22T08:10:00+08:00", "summary": "虚构示例：已有申请的面试时间询问", "kind": "application_reply", "source_ref": "https://example.com/message/reply-1", "recommendation": "审核后决定时间", "action_needed": "待本人确认"},
+    {"id": "example-app-only-1", "source_id": "liepin", "sender_role": "unknown", "received_at": "2026-09-22T08:20:00+08:00", "summary": "虚构示例：仅 App 可见，发送方未确认", "kind": "new_contact", "source_ref": "https://example.com/message/app-only-1", "action_needed": "本人在 App 核实发送方及内容"},
+    {"id": "example-receipt-1", "source_id": "email", "sender_role": "system", "company": "示例 ATS（虚构）", "received_at": "2026-09-22T08:30:00+08:00", "summary": "虚构示例：收到投递材料的自动回执，不代表面试或录用", "kind": "automatic_confirmation", "source_ref": "https://example.com/email/receipt-1"},
+    {"id": "example-promo-1", "source_id": "email", "sender_role": "system", "received_at": "2026-09-22T08:40:00+08:00", "summary": "虚构示例：平台推荐岗位广告", "kind": "promotion", "source_ref": "https://example.com/email/promo-1"}
+  ]
+}

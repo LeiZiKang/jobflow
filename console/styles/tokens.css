@@ -1,0 +1,144 @@
+/*
+ * 设计变量。改数值只改这里。
+ *
+ * 深色是默认值，写在 :root，浅色只做覆盖——报告一律深色基色，
+ * 而且有些内嵌预览会忽略 prefers-color-scheme，只认 :root。
+ */
+
+:root {
+  color-scheme: dark light;
+
+  /* 间距：4px 一档，只有这 8 个值 */
+  --s1: 4px;
+  --s2: 8px;
+  --s3: 12px;
+  --s4: 16px;
+  --s5: 20px;
+  --s6: 24px;
+  --s7: 32px;
+  --s8: 44px;
+
+  /* 字号：只有这 7 档 */
+  --fs1: 11px;   /* mono 元信息、标签 */
+  --fs2: 12px;   /* 次要文字、chip */
+  --fs3: 13px;   /* 正文、表格 */
+  --fs4: 15px;   /* 行标题 */
+  --fs5: 18px;   /* 面板标题 */
+  --fs6: 22px;   /* 页面标题 */
+  --fs7: 30px;   /* 指标数字 */
+
+  --lh-tight: 1.35;
+  --lh-body: 1.6;
+
+  --r1: 6px;
+  --r2: 10px;
+  --r3: 14px;
+  --r-pill: 999px;
+
+  --rail-w: 208px;
+  --topbar-h: 52px;
+  --page-max: 1320px;
+
+  --sans: -apple-system, BlinkMacSystemFont, "PingFang SC", "Noto Sans SC", "Helvetica Neue", sans-serif;
+  /* 标题用衬线，暖色纸感（Claude 风格）；中文回落到宋体。 */
+  --serif: ui-serif, "New York", Georgia, "Songti SC", "Noto Serif SC", serif;
+  --mono: "SF Mono", "SFMono-Regular", Menlo, Consolas, monospace;
+
+  /* 深色（默认）：暖炭灰底 + 陶土橙强调色 */
+  --bg: #262624;
+  --panel: #30302e;
+  --panel-2: #383835;
+  --rail: #1f1e1d;
+  --rail-fg: #faf9f5;
+  --rail-fg-2: rgb(250 249 245 / 0.62);
+  --rail-hover: rgb(250 249 245 / 0.06);
+  --rail-active: rgb(250 249 245 / 0.10);
+  --rail-line: rgb(250 249 245 / 0.08);
+  --line: #3d3d3a;
+  --line-2: #52514c;
+  --fg: #faf9f5;
+  --fg-2: #c2c0b6;
+  --fg-3: #8d8b83;
+  --accent: #d97757;
+  --accent-bg: #3e2b23;
+  --accent-fg: #ffffff;
+
+  --ok: #86bc8f;
+  --ok-bg: #26332a;
+  --info: #8db6d8;
+  --info-bg: #25303a;
+  --warn: #e2b66d;
+  --warn-bg: #3b3122;
+  --danger: #e8866f;
+  --danger-bg: #3f2822;
+
+  --shadow: 0 1px 2px rgb(0 0 0 / 0.25), 0 4px 14px rgb(0 0 0 / 0.18);
+}
+
+/* 跟随系统：没手动选过（无 data-theme）时，系统浅色就用浅色。 */
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --bg: #faf9f5;
+    --panel: #ffffff;
+    --panel-2: #f5f4ed;
+    --rail: #f0eee6;
+    --rail-fg: #141413;
+    --rail-fg-2: #5e5d59;
+    --rail-hover: rgb(20 20 19 / 0.05);
+    --rail-active: rgb(20 20 19 / 0.08);
+    --rail-line: rgb(20 20 19 / 0.08);
+    --line: #e8e6dc;
+    --line-2: #d4d1c4;
+    --fg: #141413;
+    --fg-2: #5e5d59;
+    --fg-3: #8a8880;
+    --accent: #c6613f;
+    --accent-bg: #f6e7df;
+    --accent-fg: #ffffff;
+
+    --ok: #3f7a51;
+    --ok-bg: #e4efe6;
+    --info: #2f6690;
+    --info-bg: #e3ecf4;
+    --warn: #8a5a14;
+    --warn-bg: #f6ecd6;
+    --danger: #b04a37;
+    --danger-bg: #f8e4de;
+
+    --shadow: 0 1px 2px rgb(20 20 19 / 0.05), 0 6px 18px rgb(20 20 19 / 0.05);
+  }
+}
+
+/* 手动切换：顶栏按钮写 <html data-theme="light|dark">，优先于系统设置。 */
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: #faf9f5;
+  --panel: #ffffff;
+  --panel-2: #f5f4ed;
+  --rail: #f0eee6;
+  --rail-fg: #141413;
+  --rail-fg-2: #5e5d59;
+  --rail-hover: rgb(20 20 19 / 0.05);
+  --rail-active: rgb(20 20 19 / 0.08);
+  --rail-line: rgb(20 20 19 / 0.08);
+  --line: #e8e6dc;
+  --line-2: #d4d1c4;
+  --fg: #141413;
+  --fg-2: #5e5d59;
+  --fg-3: #8a8880;
+  --accent: #c6613f;
+  --accent-bg: #f6e7df;
+  --accent-fg: #ffffff;
+
+  --ok: #3f7a51;
+  --ok-bg: #e4efe6;
+  --info: #2f6690;
+  --info-bg: #e3ecf4;
+  --warn: #8a5a14;
+  --warn-bg: #f6ecd6;
+  --danger: #b04a37;
+  --danger-bg: #f8e4de;
+
+  --shadow: 0 1px 2px rgb(20 20 19 / 0.05), 0 6px 18px rgb(20 20 19 / 0.05);
+}
+:root[data-theme="dark"] { color-scheme: dark; }

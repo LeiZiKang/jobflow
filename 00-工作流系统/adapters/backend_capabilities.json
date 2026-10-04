@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "verified_at": "2026-09-02T00:00:00+08:00",
+  "source": "Capability notes for a Slack bridge; verify against your own bridge before relying on them.",
+  "backends": {
+    "codex": {
+      "session_resume": true,
+      "repo_read": true,
+      "repo_write": true,
+      "live_slack_approval_bridge": true,
+      "safe_default": "read_only_with_on_request_approval",
+      "notes": "Use app-server approval codes scoped to the originating Slack conversation."
+    },
+    "claude": {
+      "session_resume": true,
+      "repo_read": true,
+      "repo_write": false,
+      "live_slack_approval_bridge": false,
+      "safe_default": "Read,Grep,Glob only",
+      "notes": "Historical implementation exists on an unmerged branch and requires fresh authenticated end-to-end verification."
+    }
+  }
+}
