@@ -14,14 +14,17 @@ jobs:
   check:
     runs-on: macos-latest
     env:
-      JOBFLOW_PROFILE_DIR: ${{ runner.temp }}/jobflow-profile
-      JOBFLOW_RUNTIME_DIR: ${{ runner.temp }}/jobflow-runtime
-      JOBFLOW_PUBLISH_DENYLIST: ${{ runner.temp }}/no-private-denylist.txt
       GIT_CONFIG_COUNT: '1'
       GIT_CONFIG_KEY_0: user.email
       GIT_CONFIG_VALUE_0: ci@users.noreply.github.com
       NEXT_TELEMETRY_DISABLED: '1'
     steps:
+      # runner 上下文不能用在 job 级 env 里，所以在第一步写进 GITHUB_ENV
+      - name: Set temp directories
+        run: |
+          echo "JOBFLOW_PROFILE_DIR=$RUNNER_TEMP/jobflow-profile" >> "$GITHUB_ENV"
+          echo "JOBFLOW_RUNTIME_DIR=$RUNNER_TEMP/jobflow-runtime" >> "$GITHUB_ENV"
+          echo "JOBFLOW_PUBLISH_DENYLIST=$RUNNER_TEMP/no-private-denylist.txt" >> "$GITHUB_ENV"
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
@@ -37,8 +40,7 @@ jobs:
           cache: npm
           cache-dependency-path: console/package-lock.json
       - name: Check publishable files (missing private denylist is expected)
-        # Bash 3.2 in UTF-8 locales can consume punctuation following $DENY.
-        run: LC_ALL=C ./00-工作流系统/scripts/check-publishable.sh
+        run: ./00-工作流系统/scripts/check-publishable.sh
       - name: Initialize demo workspace
         run: python3 00-工作流系统/bin/jobflow.py init --demo
       - name: Install console dependencies

@@ -62,7 +62,7 @@ if [ -f "$DENY" ]; then
     fi
   done < "$DENY"
 else
-  echo "WARN: 没有私人关键词表 $DENY，只做了通用检查"
+  echo "WARN: 没有私人关键词表 ${DENY}，只做了通用检查"
 fi
 
 # 8. 提交作者邮箱必须是 noreply（个人邮箱会永久公开在历史里）
