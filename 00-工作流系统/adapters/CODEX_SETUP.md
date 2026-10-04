@@ -3,7 +3,7 @@
 1. 在仓库根目录启动 Codex（应用或 `codex`）。第一次会问是否信任该目录，选信任。
 2. Codex 会读根目录 `AGENTS.md`，它和 `CLAUDE.md` 是同一份约定，按 `00-工作流系统/START_HERE.md` 冷启动。
 3. 还没初始化或 doctor 必需项未齐时，直接说"帮我初始化"，
-   Agent 会按 `00-工作流系统/runbooks/首次使用.md` 带你走一遍。
+   The agent follows [onboarding](../runbooks/onboarding.en.md) ([Chinese edition](../runbooks/首次使用.md)).
 4. 运行完整检查确认环境正常：
 
 ```bash

@@ -1,46 +1,46 @@
-# Agent 入口
+# Agent entry point
 
-开工时运行一次 `python3 00-工作流系统/bin/jobflow.py update --check`（24 小时缓存）。
-有新版本时，在开工复述末尾告知版本号和发布要点，询问是否更新；紧急事务先处理，不打断。
-只有用户在对话里明确同意更新后，才运行 `python3 00-工作流系统/bin/jobflow.py update --yes`。
-检查失败不阻塞其他工作；`JOBFLOW_UPDATE_CHECK=0` 可关闭联网检查。
+Talk to the user in the user's language.
 
-开始任何任务前，先读 `00-工作流系统/START_HERE.md`。
+At startup, run `python3 00-工作流系统/bin/jobflow.py update --check` once (24-hour cache).
+If an update is available, mention its version and release highlights at the end of your opening summary and ask whether to update. Handle urgent work first without interruption.
+Run `python3 00-工作流系统/bin/jobflow.py update --yes` only after the user explicitly agrees in the conversation.
+A failed check does not block other work; `JOBFLOW_UPDATE_CHECK=0` disables network checks.
 
-先运行 `python3 00-工作流系统/bin/jobflow.py doctor`。如果 `00-工作流系统/state/current.json` 不存在，或 doctor 必需项不全（退出码 1），先读 `00-工作流系统/runbooks/首次使用.md`，分阶段带用户补齐准备。已有 state 时不重复 init。纯引擎开发使用临时 profile/runtime 验收，不要求开发者填写真实求职资料。
+Before any task, read `00-工作流系统/START_HERE.md`.
 
-目前只支持 macOS。环境缺项按首次使用 runbook 逐项说明安装内容、用途、官方来源、大约大小、位置和卸载方法，用户明确同意后才运行 `./00-工作流系统/scripts/setup.sh --yes <item>`。拒绝就跳过，不反复劝；也可让用户运行 setup.sh 交互模式。新 Mac 无 git / python3 时，先征得同意触发 Apple 命令行工具安装，用户完成后再检测。管理员密码与系统弹窗由用户本人处理，不读、不输入、不缓存密码；不改 shell 配置、代理、网络或系统设置。Agent 的命令确认或沙箱限制是正常授权提示，受限时交还用户在终端运行。
+Run `python3 00-工作流系统/bin/jobflow.py doctor` first. If `00-工作流系统/state/current.json` is missing or required doctor checks are incomplete (exit code 1), follow the [onboarding runbook](00-工作流系统/runbooks/onboarding.en.md) and guide the user through setup in stages. Do not repeat init when state already exists. For engine development, use temporary profile/runtime directories for acceptance checks; developers do not need to supply real job-search information.
 
-For English-speaking users, follow [the English onboarding runbook](00-工作流系统/runbooks/onboarding.en.md) and [getting started](docs/getting-started.en.md). The Chinese and English onboarding runbooks are equivalent; the Chinese version takes precedence if they differ.
+Currently only macOS is supported. For each missing prerequisite, follow the onboarding runbook: explain what will be installed, its purpose, official source, approximate size, location, and uninstall method. Run `./00-工作流系统/scripts/setup.sh --yes <item>` only after explicit user consent. Skip declined items without repeated persuasion; the user may also run setup.sh interactively. On a new Mac without git / python3, obtain consent before triggering Apple Command Line Tools installation, then recheck after the user finishes. The user handles administrator passwords and system dialogs; never read, enter, or cache passwords. Do not change shell configuration, proxy, network, or system settings. Agent command approvals and sandbox restrictions are normal permission boundaries; if blocked, hand the command to the user to run in Terminal.
 
-## 红线
+See [getting started](docs/getting-started.md). Chinese editions: [onboarding](00-工作流系统/runbooks/首次使用.md) and [getting started](docs/getting-started.zh-CN.md). The onboarding editions are equivalent; English is authoritative if they differ.
 
-1. 对外动作一律先要用户批准。包括投递、发消息、跟进、改平台资料、接受条款。已批准范围不得扩大。
-2. 不谎报进度。区分计划、Agent 声称、仓库记录、平台回读。没有平台回读，不说已验证。
-3. 凭据一律不碰。状态里只存 `secret://` 引用。遇到登录页、验证码、凭据输入，停下交还用户。
-4. Git 只提交本任务相关文件。不要夹带用户已有改动。用户未要求时不要 commit。
+## Hard boundaries
 
-## 浏览器
+1. Obtain user approval before every external action, including applications, messages, follow-ups, platform profile changes, and accepting terms. Never expand approved scope.
+2. Report progress honestly. Distinguish plans, agent claims, repository records, and platform readbacks. Without a platform readback, do not claim verification.
+3. Never handle credentials. Store only `secret://` references in state. Stop and hand control to the user at sign-in pages, verification codes, or credential inputs.
+4. Commit only files related to the task. Preserve the user's existing changes. Do not commit unless asked.
 
-优先用能复用用户登录态的浏览器 skill，例如 `ego-browser`。本 session 没有时，必须先告诉用户，由用户决定。不得静默换用未登录浏览器后声称看过登录内容。
+## Browser
 
-## 报告
+Prefer a browser skill that reuses the user's signed-in sessions, such as `ego-browser`. If none is available in this session, tell the user and let them decide. Never silently switch to an unsigned browser and claim to have inspected signed-in content.
 
-给用户看的报告用 HTML。深色主题写进 `:root`，亮色只作为 `prefers-color-scheme: light` 降级。
+## Reports
 
-岗位报告套 `05-检索报告/岗位档案/_模板-岗位档案.html`。如果模板还没生成，先按 runbook 说明报告阻塞，不临时发明另一套格式。
+Use HTML for user-facing reports. Define the dark theme in `:root`; use light styling only as a `prefers-color-scheme: light` fallback.
 
-对外文字不要 AI 腔。短句，口语，不加“背景：”这类标签。
+Use `05-检索报告/岗位档案/_模板-岗位档案.html` for job reports. If the template has not been generated, report the blocker as described in the runbook; do not invent another format.
 
-## 协作方式
+Write external-facing text in short, natural sentences. Avoid generic AI phrasing and labels such as "Background:".
 
-不无条件同意用户。先给结论。提出方案时说明风险、未覆盖边界、为什么选它。建议标注置信度。
+## Collaboration
 
-## 收尾
+Do not agree unconditionally. Lead with the conclusion. Explain a proposal's risks, uncovered boundaries, and why you chose it. Label recommendations with confidence levels.
 
-任务结束前：
+## Before finishing
 
-- 更新结构化状态，或说明为什么不需要。
-- 跑 `./00-工作流系统/scripts/check-all.sh`。
-- 写清做完、没做完、卡点、下一步。
-- 新记忆只能提 proposed，用 `00-工作流系统/bin/memoryctl.py`，不要直接写 accepted。
+- Update structured state, or explain why no update is needed.
+- Run `./00-工作流系统/scripts/check-all.sh`.
+- State what is complete, incomplete, blocked, and next.
+- Propose new memory only through `00-工作流系统/bin/memoryctl.py`; never write it directly as accepted.

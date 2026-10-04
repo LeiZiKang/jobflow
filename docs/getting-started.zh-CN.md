@@ -1,6 +1,6 @@
-**中文** | [English](getting-started.en.md)
+[English](getting-started.md) | **中文**
 
-# 新手指南
+# 入门指南
 
 先准备目标、简历和要用的平台，再让 Agent 带你初始化。不需要一次想清所有答案。
 
@@ -68,7 +68,7 @@ Claude Code 可能弹出命令确认；Codex 默认沙箱可能不能联网或�
 
 ## 第一次对话会问什么
 
-在仓库里对 Agent 说“帮我初始化”。它按[首次使用访谈](../00-工作流系统/runbooks/首次使用.md)只补问缺失信息，通常每次 2–4 个问题。
+在仓库里对 Agent 说“帮我初始化”。它按[首次使用访谈（默认英文）](../00-工作流系统/runbooks/onboarding.en.md)（[中文版](../00-工作流系统/runbooks/首次使用.md)）只补问缺失信息，通常每次 2–4 个问题。
 你一次给出多个阶段的答案时，可以合并复述、一次确认后统一写文件；已有明确写入授权不重复确认，跳过或沉默不算确认：
 
 1. 你的系统、Agent 和环境缺口；想先看演示还是直接开始？
@@ -186,4 +186,4 @@ init 复制的是中性占位模板。需要按你的目标改内容，并通过
 使用 [Claude Code](../00-工作流系统/adapters/CLAUDE_CODE_SCHEDULED.md) 或
 [Codex](../00-工作流系统/adapters/CODEX_SCHEDULED.md) 对应说明。对外动作仍须另行批准。
 
-更新：对 Agent 说“帮我更新 jobflow”，或运行 `python3 00-工作流系统/bin/jobflow.py update`；提示、隐私、ZIP 迁移方法见 [README 更新](../README.md#更新)。
+更新：对 Agent 说“帮我更新 jobflow”，或运行 `python3 00-工作流系统/bin/jobflow.py update`；提示、隐私、ZIP 迁移方法见 [README 更新](../README.zh-CN.md#更新)。

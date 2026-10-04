@@ -1,12 +1,11 @@
-[中文](首次使用.md) | **English**
+**English** | [中文](首次使用.md)
 
-The two versions are equivalent. If they differ, the Chinese version takes precedence.
-内容对等，以中文版为准。
+The two versions are equivalent. If they differ, the English version takes precedence.
 
 # First use: an agent-led setup interview
 
 Use this when state is missing or a required `jobflow.py doctor --lang en` check has not passed.
-User-facing checklists: [English](../../docs/getting-started.en.md) / [中文](../../docs/新手指南.md).
+User-facing checklists: [English](../../docs/getting-started.md) / [中文](../../docs/getting-started.zh-CN.md).
 
 The stages below are an information checklist, not a questionnaire that must be read out in full. Ask only for missing information, usually 2–4 questions at a time. If the user provides answers for several stages at once, summarize the answers, undecided items, and proposed files together. One confirmation can cover those writes; separate confirmation for every stage is not required.
 
@@ -24,7 +23,7 @@ python3 00-工作流系统/bin/jobflow.py doctor --lang en --json
 Incomplete readiness is normal on first use. JSON does not print goals or identity content. Software checks have an `install` item name; personal-data checks have null. Python 3.9+ is required; Node 20.9+ is only for the console.
 A new Mac may lack working git / python3. Explain that Apple Xcode Command Line Tools (not full Xcode) provide both, obtain consent, then trigger `xcode-select --install`. If the repository is already present, setup.sh also has a Python-free bootstrap. Only open the dialog; the user completes it. Wait for the user to report completion before running doctor again. Without Python, other checks remain unknown.
 
-For each missing item, explain **what, why, official download source, approximate size, destination, and uninstall instructions**, then ask. See the [installation table](../../docs/getting-started.en.md#check-the-environment-and-install-with-consent). Order: `xcode_clt`, `node`, `console_dependencies`, `ego_browser`, optional `menubar_app`. Skip ready items. A refusal means skip without persuasion or implicit dependency installation.
+For each missing item, explain **what, why, official download source, approximate size, destination, and uninstall instructions**, then ask. See the [installation table](../../docs/getting-started.md#check-the-environment-and-install-with-consent). Order: `xcode_clt`, `node`, `console_dependencies`, `ego_browser`, optional `menubar_app`. Skip ready items. A refusal means skip without persuasion or implicit dependency installation.
 
 Only after explicit conversational consent for that item may the agent run (node is an example):
 
@@ -172,7 +171,7 @@ Ask:
 After confirming console use:
 
 ```bash
-./00-工作流系统/scripts/setup.sh  # 逐项同意 / per-item consent
+./00-工作流系统/scripts/setup.sh  # Per-item consent
 ./00-工作流系统/local-control/start.sh
 ```
 

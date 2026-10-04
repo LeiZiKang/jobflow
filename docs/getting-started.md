@@ -1,4 +1,4 @@
-[中文](新手指南.md) | **English**
+**English** | [中文](getting-started.zh-CN.md)
 
 # Getting started
 
@@ -63,7 +63,7 @@ Personal-data checks cannot be installed and have `install: null`; complete them
 
 ## What the first conversation covers
 
-Open the repository in your agent and say “Help me set up jobflow.” The [English onboarding runbook](../00-工作流系统/runbooks/onboarding.en.md) tells it to ask only for missing information, usually 2–4 questions at a time. If you give several stages of answers at once, it can summarize them together for one confirmation before writing. Explicit permission for a specific write does not need to be requested again; silence or “skip” is not confirmation:
+Open the repository in your agent and say “Help me set up jobflow.” The [onboarding runbook](../00-工作流系统/runbooks/onboarding.en.md) ([Chinese edition](../00-工作流系统/runbooks/首次使用.md)) tells it to ask only for missing information, usually 2–4 questions at a time. If you give several stages of answers at once, it can summarize them together for one confirmation before writing. Explicit permission for a specific write does not need to be requested again; silence or “skip” is not confirmation:
 
 1. Your system, agent, and missing tools. Would you like a demo or an empty workspace?
 2. Target roles and seniority. Which cities, remote arrangements, and commutes work for you?
@@ -164,4 +164,4 @@ Confirm that init has completed, then inspect the first error. Share a version o
 The scheduling documents below are currently in Chinese; your agent can help you follow them.
 Start with a successful manual run. Then read the [scheduling contract](../00-工作流系统/adapters/SCHEDULED_COMMON.md) and the instructions for [Claude Code](../00-工作流系统/adapters/CLAUDE_CODE_SCHEDULED.md) or [Codex](../00-工作流系统/adapters/CODEX_SCHEDULED.md). External actions still require separate approval.
 
-Updates: ask your Agent to update jobflow, or run `python3 00-工作流系统/bin/jobflow.py update`. See [updates](../README.en.md#updates) for notifications, privacy and ZIP migration.
+Updates: ask your Agent to update jobflow, or run `python3 00-工作流系统/bin/jobflow.py update`. See [updates](../README.md#updates) for notifications, privacy and ZIP migration.

@@ -17,7 +17,7 @@ macOS 仍可能正常询问是否打开从互联网下载的 App。
 较早的 macOS 也可在 Finder 中右键 App →「打开」。只对你信任的下载执行此操作。
 
 DMG 仅包含菜单栏 App，不包含仓库、Node.js、Python 或控制台依赖。
-先下载或 clone jobflow 仓库，按仓库新手指南准备 Python 3、Node.js 22 和工作区，
+Download or clone jobflow and follow the [getting-started guide](../../docs/getting-started.md) to prepare Python 3, Node.js 22, and the workspace.
 并在 `console/` 执行 `npm ci`。预编译 App 不需要 Swift 编译工具链；运行引擎仍需要上述环境。
 首次启动会弹出文件夹选择器，选择包含 `00-工作流系统/local-control/start.sh` 的仓库根目录。
 取消选择不会启动服务，可稍后通过「启动控制台」或「更换仓库文件夹…」重新选择。

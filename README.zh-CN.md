@@ -1,0 +1,211 @@
+[English](README.md) | **中文**
+
+# jobflow
+
+用 AI Agent 帮你找工作的 repo-first 工作流。
+
+求职目标、进度、证据和审批都有明确的存放位置。换 Agent 或开新会话时，从文件接着做。
+计划、Agent 声称、仓库记录、平台回读分开记录。投递、发消息、改平台资料等对外动作先由你批准。
+
+## 最省事的开始方式
+
+目前只支持 macOS。你只需要先装好 [Claude 桌面应用](https://claude.ai/download)（Code 标签页）或 [Codex](https://chatgpt.com/codex)，然后直接对 Agent 说：
+
+> 帮我把 https://github.com/LeiZiKang/jobflow clone 到本地，然后帮我初始化。
+
+连 git clone 都可以交给 Agent。其他东西它会检查，逐项说明装什么、为什么需要、官方来源、大约大小、安装位置和卸载方法，再问你要不要装。不同意就跳过，不反复劝。
+新 Mac 若还没有 git / python3，Agent 先征得同意再触发 `xcode-select --install`，由你在 Apple 弹窗里完成命令行工具安装，之后继续 clone 和初始化。
+管理员密码、系统弹窗和平台登录都由你本人处理；不会修改 shell 配置、代理、网络或系统设置。
+
+
+## 看起来是什么样
+
+本地控制台（截图用的是 `init --demo` 的虚构数据）：
+
+| 今天 | 检索到的岗位 | 跟踪中 |
+|---|---|---|
+| ![今天](docs/images/console-today.png) | ![检索岗位](docs/images/console-opportunities.png) | ![跟踪中](docs/images/console-tracking.png) |
+
+## 核心设计
+
+- 仓库保存状态、任务、证据和报告；个人目标与渠道配置放在仓库外。
+- 一个主 Decider 负责判断和派活，执行 Agent 按任务信封工作。通俗说，Decider 是协调工作的 Agent，任务信封就是写清要做什么、能做什么和何时停止的任务单。
+- 硬线、评分权重、证据覆盖率共同决定推荐；分数不是录用概率。
+- 外部调度器只触发任务，任务范围由仓库定义。
+- 本地控制台展示候选、投递、报告和 Agent runs；CLI 可独立使用。
+
+## 开始前准备
+
+先读 [入门指南](docs/getting-started.zh-CN.md)，提前想好目标、权重、硬线和渠道。
+
+- 目前只支持 macOS；只需先装 Agent，其他环境由 Agent 检查并逐项询问是否代装。Python 3.9+ 引擎只用标准库。
+- 能打开本地仓库的 Claude Code、Codex 或其他 Agent。
+- 至少一份简历，放进 `03-简历/`；PDF、Markdown、JSON、DOCX、TXT 均可。
+- 推荐 [ego lite](https://lite.ego.app/) 和 Agent 侧的 `ego-browser` skill，以复用你自己的浏览器登录态。可在同意后用 setup.sh 安装官方 DMG；不装时只能读未登录公开页面。
+- 选好 BOSS直聘、猎聘、LinkedIn、Indeed、前程无忧、公司官网/ATS 等渠道，由你自己登录。Agent 不碰账号密码或验证码。
+- 可选：Node 20.9+ 用于控制台；菜单栏 App 下载即用；作品集、已有机会、identity.json。
+
+## 快速开始
+
+手动方式：若 git / python3 尚不可用，先在终端运行 `xcode-select --install`，自行完成 Apple 弹窗。
+
+```bash
+git clone https://github.com/LeiZiKang/jobflow.git
+cd jobflow
+```
+
+用 Agent 打开仓库，说“帮我初始化”。它会按 [首次使用访谈（默认英文）](00-工作流系统/runbooks/onboarding.en.md)（[中文版](00-工作流系统/runbooks/首次使用.md)）
+只补问尚缺的信息，通常每次 2–4 个问题；你一次提供的信息可合并复述、一次确认，写文件前仍需确认。
+
+也可以手动开始：
+
+```bash
+python3 00-工作流系统/bin/jobflow.py init
+python3 00-工作流系统/bin/jobflow.py doctor
+```
+
+首次 doctor 返回 1 是正常的：还要定制个人 goals、放入简历、确认渠道。
+`00-工作流系统/config/search_channels.json` 和 `00-工作流系统/config/inbound_sources.json` 是默认模板；确认范围后复制到
+`JOBFLOW_PROFILE_DIR`（默认 `~/.config/jobflow/profile/`）再编辑，别把个人偏好写进跟踪文件。
+步骤见入门指南。读取时个人配置优先，无覆盖时才用模板：
+
+```bash
+python3 00-工作流系统/bin/jobflow.py config search_channels.json
+python3 00-工作流系统/bin/jobflow.py config inbound_sources.json
+python3 00-工作流系统/bin/jobflow.py doctor --json
+./00-工作流系统/scripts/check-all.sh
+```
+
+**准备好了**：doctor 必需项全部 ok，且 check-all 通过。doctor 不输出 goals / identity 正文。
+Node 缺失标为 missing；控制台依赖、ego-browser、菜单栏 App、identity.json 是可选项，均不影响 doctor 退出码。
+控制台依赖须同时具备可执行的 `.bin/tsc` 和 `.bin/next`；残缺安装需运行 setup.sh 逐项同意修复。
+`foreign_first` 未回答时保留 null，评分照常可用，只是不按所有制排序。
+平台登录与实际可访问性仍需核实。第一步建议手动跑一次只读岗位检索。
+
+想先看虚构演示：
+
+```bash
+python3 00-工作流系统/bin/jobflow.py init --demo
+# 看完并确认重置后
+python3 00-工作流系统/bin/jobflow.py init --force
+```
+
+重置前会备份旧核心状态到 `00-工作流系统/.init-backup-*`。演示清单内的业务文件会被移除，
+不要直接在演示文件里填真实数据。个人目录的配置保留。
+
+## 打开控制台
+
+```bash
+./00-工作流系统/scripts/setup.sh  # 逐项同意 / per-item consent
+./00-工作流系统/local-control/start.sh
+```
+
+打开 `http://127.0.0.1:8788`。macOS 也可双击 `打开本地求职控制台.command`。
+请用启动脚本，不要直接 `npm run dev`；脚本负责连接本地服务。
+
+零 Node 的只读看板：`./打开看板.command`。
+可选菜单栏 App：运行 setup.sh，逐项同意后从 [GitHub Releases](https://github.com/LeiZiKang/jobflow/releases/latest/download/Jobflow.dmg) 安装到 `~/Applications`。DMG 经过 Apple 公证，双击即可打开。发版后的短时间内如果下载到的是尚未替换的临时版本，macOS 会拦截：右键→打开，或在「系统设置→隐私与安全性」点“仍要打开”；不要关闭 Gatekeeper。开发者仍可运行 `./00-工作流系统/menubar-app/build.sh`。
+
+## 日常怎么用
+
+| 步骤 | 你与 Agent 怎么配合 | Runbook |
+|---|---|---|
+| 检索 | 确认只读范围，按所选渠道查 JD 并保存来源 | [每日岗位检索](00-工作流系统/runbooks/每日岗位检索.md) |
+| 看报告 | 读匹配度、风险、未知项，决定具体岗位是否投递 | [岗位报告](00-工作流系统/runbooks/岗位报告撰写.md)、[目标评分](00-工作流系统/runbooks/目标评分与推荐.md) |
+| 准备与投递 | 核对事实，批准具体文字和附件，最终确认后才执行 | [投递](00-工作流系统/runbooks/投递.md) |
+| 跟进 | 只读回读平台状态，更新证据；发送另批 | [跟进](00-工作流系统/runbooks/跟进.md) |
+| 面试与复盘 | 提供材料，核实事实，整理问题与复盘 | [面试准备](00-工作流系统/runbooks/面试准备.md)、[推进求职](00-工作流系统/runbooks/推进求职.md) |
+
+Agent 可整理材料、校验和生成本地报告。对外动作必须先批准，已批准范围不得扩大。
+
+## 定时任务
+
+外部调度器负责按时启动，具体任务范围仍由仓库信封决定。先手动跑通，再配置定时任务。
+
+- [通用规则](00-工作流系统/adapters/SCHEDULED_COMMON.md)
+- [Claude Code](00-工作流系统/adapters/CLAUDE_CODE_SCHEDULED.md)
+- [Codex](00-工作流系统/adapters/CODEX_SCHEDULED.md)
+
+触发器须使用同一 `JOBFLOW_PROFILE_DIR`；搜索与邀约来源从个人覆盖配置读取。
+
+## 数据与目录
+
+| 路径 | 用途 |
+|---|---|
+| `JOBFLOW_PROFILE_DIR`（默认 `~/.config/jobflow/profile/`） | goals、个人渠道配置、onboarding 访谈、可选 identity |
+| `JOBFLOW_RUNTIME_DIR`（默认 `~/.local/state/jobflow`） | 本地服务的 SQLite、token、pid |
+| `00-工作流系统/` | 引擎、协议、CLI、runbook、测试、本地服务 |
+| `00-工作流系统/state/`、`evidence/`、`approvals/` | 初始化后的状态、证据、审批 |
+| `console/` | Next.js 本地控制台 |
+| `01-现在在做/` | 当前投递、候选与状态视图 |
+| `02-策略/` | 策略与复盘 |
+| `03-简历/` | 简历材料 |
+| `04-面试/` | 面试准备和 Case |
+| `05-检索报告/` | 岗位报告、目录和检索结果 |
+
+个人目录必须在仓库外。仓库内的用户数据默认被 `.gitignore` 忽略。
+若想版本化自己的求职数据，只在**私有仓库**里调整忽略规则；不要提交到公开仓库。
+
+## 安全边界
+
+- Agent 不碰密码、验证码、Cookie、token；遇到登录或验证停下交还给你。
+- 状态中只保存 `secret://` 凭据引用，不保存真实秘密。
+- 检索授权不包含投递、发送、接受条款或修改平台资料。
+- 遵守各平台规则；工具可用不代表平台允许所有自动化操作。
+
+## 常见问题
+
+**init 完为什么还没准备好？** init 只搭工作区并复制 goals 示例。运行 doctor，补齐目标定制、简历和个人渠道配置。
+
+**缺 ego-browser 或 Node 怎么办？** 它们是建议项。浏览器限制要由 Agent 说明；Node 只影响控制台。identity.json 也可暂不提供。
+
+**check-all 报错怎么办？** 先确认 init 已完成，再处理第一个报错。未装控制台依赖时会告警并跳过 TypeScript 检查。
+
+更多说明见 [入门指南](docs/getting-started.zh-CN.md)。
+
+## 参与开发
+
+```bash
+./00-工作流系统/scripts/install-hooks.sh
+```
+
+- `check-all.sh`：校验、生成视图、单元测试；先 init，可用虚构 demo。安装控制台依赖后还会检查 TypeScript。
+- `check-publishable.sh`：检查待发布文件与历史中的敏感内容。私人关键词放在仓库外的 `~/.config/jobflow/publish-denylist.txt`，或用 `JOBFLOW_PUBLISH_DENYLIST` 指定。
+- 测试使用临时 `JOBFLOW_PROFILE_DIR` 和 `JOBFLOW_RUNTIME_DIR`，不要接触真实个人配置。
+
+## 许可证
+
+MIT，见 [LICENSE](LICENSE)。
+
+## 更新
+
+Agent 开工时会检查更新，有新版会先告诉你版本号和要点。控制台顶部横幅和菜单栏的
+“有新版本”菜单读取同一份缓存，不主动联网；点击可看 Release。也可在 GitHub 点
+Watch → Custom → Releases 订阅发布通知。
+
+对 Agent 说“帮我更新 jobflow”，或自己运行：
+
+```bash
+python3 00-工作流系统/bin/jobflow.py --version
+python3 00-工作流系统/bin/jobflow.py update --check
+python3 00-工作流系统/bin/jobflow.py update
+```
+
+更新命令要求 git 仓库、有 origin、处于 main 且引擎无本地改动。它先显示新版和发布说明，
+确认 `[y/N]` 后 fetch tags、快进合并、备份迁移数据，再运行 doctor 和完整检查。
+无法快进会停止；有本地改动可先 `git stash`（未跟踪文件加 `-u`）或交给 Agent 处理。
+`--yes` 仅供 Agent 在用户已于对话中明确同意更新后使用。lockfile 变化时会提示在 console/
+重新 `npm ci`，不自动安装依赖。失败时请看输出的当前版本、数据状态与备份位置。
+回退代码可用 `git checkout v<旧版本>`，然后将本次 `00-工作流系统/.migrate-backup-*/`
+内的 state、events、evidence、approvals 和 DECIDER_BRIEF.md 恢复到系统目录（先保留现有数据）；
+回退后是 detached HEAD，下次更新需先回 main。迁移不覆盖仓库外的 profile。
+更新期间先停止控制台及其他写入任务；迁移锁只协调遵守写入协议的进程。
+
+检查会访问 GitHub API，GitHub 能看到你的 IP；不发送个人数据或 token，不更改代理。
+结果（含失败）缓存 24 小时，`update --check --force` 可忽略缓存，
+`JOBFLOW_UPDATE_CHECK=0` 完全关闭联网检查。fork 可设 `JOBFLOW_UPDATE_REPO=所有者/仓库`。
+
+ZIP 用户：下载新版到新目录，把旧版 `00-工作流系统/` 下的 state、events、evidence、approvals、
+DECIDER_BRIEF.md，以及 01–05 用户数据目录、assets 和仓库外 profile 拷过去（profile 原位置不变可直接复用）。
+然后运行 `python3 00-工作流系统/bin/jobflow.py migrate --dry-run` 查看步骤，再运行 `migrate`、
+`doctor` 和 `./00-工作流系统/scripts/check-all.sh`。也可改用 git clone 后按同样方法迁入数据。
