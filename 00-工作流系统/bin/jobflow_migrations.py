@@ -27,16 +27,21 @@ def migrate(repo, *, dry_run=False):
             raise ValueError('工作区版本高于引擎；不支持自动降级，请恢复匹配版本的备份。')
         steps = []
         cursor = current
-        while cursor != target:
-            step = next((s for s in MIGRATIONS if s[0] == cursor), None)
-            if step is None or semver(step[1]) <= semver(cursor) or semver(step[1]) > semver(target):
+        candidates = sorted((s for s in MIGRATIONS
+                             if semver(s[0]) >= semver(current)
+                             and semver(s[1]) <= semver(target)),
+                            key=lambda s: semver(s[0]))
+        for step in candidates:
+            if semver(step[0]) != semver(cursor) or semver(step[1]) <= semver(cursor):
                 raise ValueError(f'没有迁移路径：{cursor} → {target}')
             steps.append(step)
             cursor = step[1]
-        if not steps:
+        if not steps and current == target:
             return {'status': 'up_to_date', 'workspace_version': current, 'steps': [], 'backup': None}
         result = {'status': 'dry_run', 'workspace_version': target,
                   'steps': [f'{a} → {b}' for a, b, _ in steps], 'backup': None}
+        if cursor != target:
+            result['steps'].append(f'{cursor} → {target}（仅更新版本号）')
         if dry_run:
             return result
         assert_owner(repo)
@@ -55,6 +60,10 @@ def migrate(repo, *, dry_run=False):
         try:
             for _, _, function in steps:
                 function(repo)
+            from jobflow import _atomic_write_json
+            state = repo.load('current.json')
+            state['workspace_version'] = target
+            _atomic_write_json(repo.state_dir / 'current.json', state)
             validation = repo.validate()
             if not validation.ok:
                 raise ValueError('; '.join(validation.errors))

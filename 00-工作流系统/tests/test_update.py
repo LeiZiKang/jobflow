@@ -24,7 +24,7 @@ class TempCase(unittest.TestCase):
         self.base = Path(self.temp.name)
         self.root = self.base / 'repo'
         self.root.mkdir()
-        (self.root / 'VERSION').write_text('1.1.0\n')
+        (self.root / 'VERSION').write_text('1.1.1\n')
         self.env = patch.dict(os.environ, {'JOBFLOW_PROFILE_DIR': str(self.base / 'profile'),
             'JOBFLOW_RUNTIME_DIR': str(self.base / 'runtime'), 'JOBFLOW_UPDATE_CHECK': '1',
             'JOBFLOW_UPDATE_REPO': 'LeiZiKang/jobflow'})
@@ -44,7 +44,7 @@ class UpdateTests(TempCase):
         request, timeout = self.calls[0]
         self.assertEqual(timeout, 5)
         self.assertEqual(request.full_url, 'https://api.github.com/repos/LeiZiKang/jobflow/releases/latest')
-        self.assertEqual(request.get_header('User-agent'), 'jobflow/1.1.0')
+        self.assertEqual(request.get_header('User-agent'), 'jobflow/1.1.1')
         self.assertIsNone(request.data)
         self.assertIsNone(request.get_header('Authorization'))
         self.assertEqual(result['release_url'], 'https://github.com/LeiZiKang/jobflow/releases/tag/v1.2.0')
@@ -107,7 +107,7 @@ class UpdateTests(TempCase):
         return SimpleNamespace(returncode=0, stdout=out, stderr='')
 
     def release(self, *args, **kwargs):
-        return dict(status='ok', current_version='1.1.0', latest_version='1.2.0',
+        return dict(status='ok', current_version='1.1.1', latest_version='1.2.0',
                     update_available=True, release_url='https://github.com/LeiZiKang/jobflow/releases/tag/v1.2.0', notes=[])
 
     def test_update_consent_sequence_and_dirty_block(self):
@@ -146,6 +146,7 @@ class MigrationTests(TempCase):
         self.repo = JobflowRepo(self.root / BIN.parent.name)
         self.repo.init_workspace()
         current = self.repo.load('current.json')
+        self.assertEqual(current['workspace_version'], '1.1.1')
         del current['workspace_version']
         (self.repo.state_dir / 'current.json').write_text(json.dumps(current))
 
@@ -156,16 +157,84 @@ class MigrationTests(TempCase):
 
     def test_dry_run_migration_idempotence(self):
         before = self.snapshot()
-        self.assertEqual(migrations.migrate(self.repo, dry_run=True)['status'], 'dry_run')
+        preview = migrations.migrate(self.repo, dry_run=True)
+        self.assertEqual(preview['status'], 'dry_run')
+        self.assertEqual(preview['steps'], ['1.0.0 → 1.1.0', '1.1.0 → 1.1.1（仅更新版本号）'])
         self.assertEqual(before, self.snapshot())
         self.assertFalse(list(self.repo.system_dir.glob('.migrate-backup-*')))
-        result = migrations.migrate(self.repo)
+        with patch.object(migrations, 'to_110', wraps=migrations.to_110) as migration:
+            with patch.object(migrations, 'MIGRATIONS', [('1.0.0', '1.1.0', migration)]):
+                result = migrations.migrate(self.repo)
+            migration.assert_called_once_with(self.repo)
         self.assertEqual(result['status'], 'migrated')
+        self.assertEqual(self.repo.load('current.json')['workspace_version'], '1.1.1')
         self.assertTrue(self.repo.validate().ok)
         after = self.snapshot()
         self.assertEqual(migrations.migrate(self.repo)['status'], 'up_to_date')
         self.assertEqual(after, self.snapshot())
         self.assertEqual(len(list(self.repo.system_dir.glob('.migrate-backup-*'))), 1)
+
+    def set_version(self, value):
+        current = self.repo.load('current.json')
+        current['workspace_version'] = value
+        (self.repo.state_dir / 'current.json').write_text(json.dumps(current))
+
+    def test_version_only_dry_run_backup_and_idempotence(self):
+        self.set_version('1.1.0')
+        before = self.snapshot()
+        preview = migrations.migrate(self.repo, dry_run=True)
+        self.assertEqual(preview['steps'], ['1.1.0 → 1.1.1（仅更新版本号）'])
+        self.assertEqual(preview['status'], 'dry_run')
+        self.assertEqual(before, self.snapshot())
+        self.assertFalse(list(self.repo.system_dir.glob('.migrate-backup-*')))
+        with patch.object(migrations, 'to_110') as migration:
+            with patch.object(migrations, 'MIGRATIONS', [('1.0.0', '1.1.0', migration)]):
+                result = migrations.migrate(self.repo)
+            migration.assert_not_called()
+        self.assertEqual(result['status'], 'migrated')
+        backup = Path(result['backup'])
+        self.assertEqual({name: (backup / name).read_bytes() for name in before}, before)
+        expected = json.loads(before['state/current.json'])
+        expected['workspace_version'] = '1.1.1'
+        after = self.snapshot()
+        self.assertEqual(json.loads(after['state/current.json']), expected)
+        self.assertEqual({k: v for k, v in after.items() if k != 'state/current.json'},
+                         {k: v for k, v in before.items() if k != 'state/current.json'})
+        self.assertEqual(migrations.migrate(self.repo)['status'], 'up_to_date')
+        self.assertEqual(migrations.migrate(self.repo, dry_run=True)['status'], 'up_to_date')
+        self.assertEqual(len(list(self.repo.system_dir.glob('.migrate-backup-*'))), 1)
+
+    def test_newer_workspace_rejected_without_changes(self):
+        self.set_version('1.2.0')
+        before = self.snapshot()
+        for dry_run in (False, True):
+            with self.assertRaisesRegex(ValueError, '工作区版本高于引擎'):
+                migrations.migrate(self.repo, dry_run=dry_run)
+        self.assertEqual(before, self.snapshot())
+        self.assertFalse(list(self.repo.system_dir.glob('.migrate-backup-*')))
+
+    def test_sorted_chain_and_gap_or_overlap_rejected(self):
+        (self.root / 'VERSION').write_text('1.3.1')
+        noop = lambda repo: None
+        with patch.object(migrations, 'MIGRATIONS', [
+                ('1.1.0', '1.3.0', noop), ('1.0.0', '1.1.0', noop),
+                ('1.3.0', '1.4.0', noop)]):
+            self.assertEqual(migrations.migrate(self.repo, dry_run=True)['steps'],
+                             ['1.0.0 → 1.1.0', '1.1.0 → 1.3.0', '1.3.0 → 1.3.1（仅更新版本号）'])
+        for start in ('1.0.5', '1.2.0'):
+            with patch.object(migrations, 'MIGRATIONS', [
+                    ('1.0.0', '1.1.0', noop), (start, '1.3.0', noop)]):
+                with self.assertRaisesRegex(ValueError, '没有迁移路径'):
+                    migrations.migrate(self.repo)
+        self.assertFalse(list(self.repo.system_dir.glob('.migrate-backup-*')))
+
+    def test_version_only_validation_failure_restores_all_bytes(self):
+        self.set_version('1.1.0')
+        before = self.snapshot()
+        with patch.object(self.repo, 'validate', return_value=SimpleNamespace(ok=False, errors=['invalid'])):
+            with self.assertRaisesRegex(ValueError, '数据已恢复'):
+                migrations.migrate(self.repo)
+        self.assertEqual(before, self.snapshot())
 
     def test_validation_failure_restores_all_bytes(self):
         before = self.snapshot()
@@ -208,7 +277,7 @@ class LegacyMigrationTests(TempCase):
                 new = self.base / ('new-demo' if demo else 'new-empty')
                 shutil.copytree(BIN.parent, new / BIN.parent.name,
                     ignore=shutil.ignore_patterns('state', 'events', 'evidence', 'approvals', '.init-backup-*', '.migrate-backup-*', '__pycache__'))
-                (new / 'VERSION').write_text('1.1.0')
+                (new / 'VERSION').write_text('1.1.1')
                 fresh = JobflowRepo(new / BIN.parent.name)
                 fresh.init_workspace(demo=demo)
                 def shape(value):
@@ -219,11 +288,11 @@ class LegacyMigrationTests(TempCase):
                     return type(value).__name__
                 self.assertEqual({p.name: shape(json.loads(p.read_text())) for p in repo.state_dir.glob('*.json')},
                                  {p.name: shape(json.loads(p.read_text())) for p in fresh.state_dir.glob('*.json')})
-                (old / 'VERSION').write_text('1.1.0')
+                (old / 'VERSION').write_text('1.1.1')
                 result = migrations.migrate(repo)
                 self.assertEqual(result['status'], 'migrated')
                 after = repo.load('current.json')
-                self.assertEqual(after.pop('workspace_version'), '1.1.0')
+                self.assertEqual(after.pop('workspace_version'), '1.1.1')
                 self.assertEqual(after, before)
                 self.assertTrue(repo.validate().ok)
                 self.assertEqual(migrations.migrate(repo)['status'], 'up_to_date')
