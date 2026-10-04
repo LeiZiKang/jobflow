@@ -95,7 +95,7 @@ Reset backs up existing core state to `00-工作流系统/.init-backup-*`. Busin
 Open `http://127.0.0.1:8788`. On macOS, you can also double-click `打开本地求职控制台.command` (open the local job-search console). Use the launcher instead of `npm run dev`; it connects the local service.
 
 For a read-only dashboard without Node: `./打开看板.command` (open dashboard).
-Optional menu bar app: consent in setup.sh to install [Jobflow.dmg](https://github.com/LeiZiKang/jobflow/releases/latest/download/Jobflow.dmg) into `~/Applications`. It is not notarized: if blocked, right-click → Open or use System Settings → Privacy & Security → Open Anyway. Choose the repository on first launch. Developers can still use `./00-工作流系统/menubar-app/build.sh`.
+Optional menu bar app: consent in setup.sh to install [Jobflow.dmg](https://github.com/LeiZiKang/jobflow/releases/latest/download/Jobflow.dmg) into `~/Applications`. The DMG is notarized by Apple and opens normally. Right after a release you may briefly get a temporary un-notarized build; if macOS blocks it, right-click → Open, or System Settings → Privacy & Security → Open Anyway. Do not disable Gatekeeper. Choose the repository on first launch. Developers can still use `./00-工作流系统/menubar-app/build.sh`.
 
 Daily and scheduling runbooks, templates, and generated reports are currently mainly in Chinese. Your agent can translate and explain them. Doctor supports `--lang en` or `--lang zh`; without the flag it uses JOBFLOW_LANG, then LANG (zh-prefixed locales use Chinese; others use English).
 

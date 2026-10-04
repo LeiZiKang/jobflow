@@ -90,7 +90,7 @@ def describe(item: str, root: Path, lang: str) -> str:
     labels = ("安装及用途", "官方来源", "大约大小", "安装到", "卸载方法") if lang == "zh" else ("Install / purpose", "Official source", "Approximate size", "Destination", "Uninstall")
     lines = [f"\n[{item}]"] + [f"{key}: {value}" for key, value in zip(labels, records[item])]
     if item == "menubar_app":
-        lines.append("未公证，Gatekeeper 可能拦截。右键→打开，或系统设置→隐私与安全性→仍要打开；首次启动选择仓库文件夹。 / Not notarized: use right-click → Open or System Settings → Privacy & Security → Open Anyway; choose the repository on first launch.")
+        lines.append("已经过 Apple 公证；若刚发版拿到临时未公证版本，右键→打开或在系统设置→隐私与安全性点仍要打开；首次启动选择仓库文件夹。 / Notarized by Apple; if you get a temporary un-notarized build right after a release, use right-click → Open or System Settings → Privacy & Security → Open Anyway; choose the repository on first launch.")
     lines.append("不修改 shell 配置、代理、网络或系统设置；不读取、输入或缓存密码。 / No shell, proxy, network or system settings changes; no password handling.")
     return "\n".join(lines)
 

@@ -104,7 +104,7 @@ python3 00-工作流系统/bin/jobflow.py init --force
 请用启动脚本，不要直接 `npm run dev`；脚本负责连接本地服务。
 
 零 Node 的只读看板：`./打开看板.command`。
-可选菜单栏 App：运行 setup.sh，逐项同意后从 [GitHub Releases](https://github.com/LeiZiKang/jobflow/releases/latest/download/Jobflow.dmg) 安装到 `~/Applications`。首次打开遇 Gatekeeper 拦截时右键→打开，或在「系统设置→隐私与安全性」点“仍要打开”；首次启动选择仓库文件夹。开发者仍可运行 `./00-工作流系统/menubar-app/build.sh`。
+可选菜单栏 App：运行 setup.sh，逐项同意后从 [GitHub Releases](https://github.com/LeiZiKang/jobflow/releases/latest/download/Jobflow.dmg) 安装到 `~/Applications`。DMG 经过 Apple 公证，双击即可打开。发版后的短时间内如果下载到的是尚未替换的临时版本，macOS 会拦截：右键→打开，或在「系统设置→隐私与安全性」点“仍要打开”；不要关闭 Gatekeeper。开发者仍可运行 `./00-工作流系统/menubar-app/build.sh`。
 
 ## 日常怎么用
 

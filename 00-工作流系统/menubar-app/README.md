@@ -9,7 +9,10 @@
 从 [最新 Release 下载 Jobflow.dmg](https://github.com/LeiZiKang/jobflow/releases/latest/download/Jobflow.dmg)，
 打开 DMG，把「求职控制台.app」拖进 Applications。无需自己编译 App。
 
-App 使用 ad-hoc 签名，未经 Apple 公证。首次打开如果被 Gatekeeper 拦截，
+Developer ID 签名并经 Apple 公证的版本，下载后应不再出现「无法验证开发者」提示；
+macOS 仍可能正常询问是否打开从互联网下载的 App。
+刚发版、维护者尚未替换附件时，Actions 提供的是未经公证的 ad-hoc 版。
+如果拿到该版本且首次打开被 Gatekeeper 拦截，
 到「系统设置 → 隐私与安全性」找到刚被拦截的 App，点击「仍要打开」，再确认打开。
 较早的 macOS 也可在 Finder 中右键 App →「打开」。只对你信任的下载执行此操作。
 
@@ -39,6 +42,8 @@ DMG 仅包含菜单栏 App，不包含仓库、Node.js、Python 或控制台依�
 
 DMG 不嵌入构建机仓库路径，包含 App 和指向 `/Applications` 的快捷方式。
 推送 `v*` 标签会运行 release workflow，创建同名 Release（若不存在），并上传固定资产名 `Jobflow.dmg`。
+Actions 先上传 ad-hoc 版，维护者再用本机完成签名、公证和附件替换，详见 [发版说明](RELEASING.md)。
+未设置 `JOBFLOW_SIGN_IDENTITY` 时，构建仍默认使用 ad-hoc 签名。
 
 - 菜单栏显示 `已验证投递/目标`，数据与 `jobflow.py status` 同源（`state/current.json` 的 metrics），每 5 秒刷新。
 - 菜单：控制台状态、待审核草稿数、打开控制台（`127.0.0.1:8788`，默认浏览器）、复制控制台地址（粘到任意浏览器）、

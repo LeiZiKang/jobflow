@@ -1,4 +1,6 @@
 name: Release DMG
+# Actions 先上传 ad-hoc DMG；维护者等待本工作流完成后，在本机签名、公证并替换附件。
+# 流程见 00-工作流系统/menubar-app/RELEASING.md；不在 CI 配置 Apple 凭据。
 
 on:
   push:
