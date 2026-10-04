@@ -106,7 +106,14 @@ class JobflowdTests(unittest.TestCase):
             ),
             encoding="utf-8",
         )
-        controller = jobflowd.LocalController(root, Path(temp.name) / "runs.sqlite3", max_workers=6)
+        # 控制器在构造时就探测本机有没有 codex / claude 并缓存结果；
+        # 这里固定成"都已安装"，测试结果才不取决于跑测试的机器（例如 CI）。
+        fake_probe = lambda: {
+            "codex": {"available": True, "version": "test"},
+            "claude": {"available": True, "version": "test"},
+        }
+        with patch.object(jobflowd, "probe_backends", fake_probe):
+            controller = jobflowd.LocalController(root, Path(temp.name) / "runs.sqlite3", max_workers=6)
         self.addCleanup(controller.close)
         return controller
 
