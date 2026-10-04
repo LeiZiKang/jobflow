@@ -10,7 +10,7 @@
 ## 核心设计
 
 - 仓库保存状态、任务、证据和报告；个人目标与渠道配置放在仓库外。
-- 一个主 Decider 负责判断和派活，执行 Agent 按任务信封工作。
+- 一个主 Decider 负责判断和派活，执行 Agent 按任务信封工作。通俗说，Decider 是协调工作的 Agent，任务信封就是写清要做什么、能做什么和何时停止的任务单。
 - 硬线、评分权重、证据覆盖率共同决定推荐；分数不是录用概率。
 - 外部调度器只触发任务，任务范围由仓库定义。
 - 本地控制台展示候选、投递、报告和 Agent runs；CLI 可独立使用。
@@ -29,12 +29,12 @@
 ## 快速开始
 
 ```bash
-git clone <repo-url>
+git clone https://github.com/LeiZiKang/jobflow.git
 cd jobflow
 ```
 
 用 Agent 打开仓库，说“帮我初始化”。它会按 [首次使用访谈](00-工作流系统/runbooks/首次使用.md)
-每次问 2–4 个问题，复述并得到确认后才写文件。
+只补问尚缺的信息，通常每次 2–4 个问题；你一次提供的信息可合并复述、一次确认，写文件前仍需确认。
 
 也可以手动开始：
 
@@ -44,7 +44,7 @@ python3 00-工作流系统/bin/jobflow.py doctor
 ```
 
 首次 doctor 返回 1 是正常的：还要定制个人 goals、放入简历、确认渠道。
-`config/search_channels.json` 和 `config/inbound_sources.json` 是默认模板；确认范围后复制到
+`00-工作流系统/config/search_channels.json` 和 `00-工作流系统/config/inbound_sources.json` 是默认模板；确认范围后复制到
 `JOBFLOW_PROFILE_DIR`（默认 `~/.config/jobflow/profile/`）再编辑，别把个人偏好写进跟踪文件。
 步骤见新手指南。读取时个人配置优先，无覆盖时才用模板：
 
@@ -57,6 +57,8 @@ python3 00-工作流系统/bin/jobflow.py doctor --json
 
 **准备好了**：doctor 必需项全部 ok，且 check-all 通过。doctor 不输出 goals / identity 正文。
 Node、控制台依赖、ego-browser、identity.json 缺失只会 warn，不影响 doctor 退出码。
+控制台依赖须同时具备可执行的 `.bin/tsc` 和 `.bin/next`；残缺安装需重新 npm install。
+`foreign_first` 未回答时保留 null，评分照常可用，只是不按所有制排序。
 平台登录与实际可访问性仍需核实。第一步建议手动跑一次只读岗位检索。
 
 想先看虚构演示：

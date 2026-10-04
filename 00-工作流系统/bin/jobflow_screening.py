@@ -45,9 +45,10 @@ def _number(value: object, low: float, high: float) -> bool:
 
 def validate_goals(goals: dict) -> None:
     _object(goals, {"schema_version", "dimensions", "hard_rules", "thresholds", "foreign_first"},
-            {"schema_version", "dimensions", "hard_rules", "thresholds", "foreign_first"}, "goals")
+            {"schema_version", "dimensions", "hard_rules", "thresholds"}, "goals")
     _require(type(goals["schema_version"]) is int and goals["schema_version"] == 1, "Unsupported goals version")
-    _require(type(goals["foreign_first"]) is bool, "foreign_first must be boolean")
+    _require(goals.get("foreign_first") is None or type(goals["foreign_first"]) is bool,
+             "foreign_first must be boolean, null, or omitted")
     dimensions = goals["dimensions"]
     _require(isinstance(dimensions, dict) and bool(dimensions), "dimensions must be nonempty")
     for key, item in dimensions.items():
@@ -79,7 +80,7 @@ def profile_summary(goals: dict) -> dict:
     return {"valid": True, "policy_version": POLICY_VERSION, "goal_config_sha256": config_hash,
             "dimension_weights": {key: item["weight"] for key, item in goals["dimensions"].items()},
             "total_weight": sum(item["weight"] for item in goals["dimensions"].values()),
-            "hard_rule_count": len(goals["hard_rules"]), "foreign_first": goals["foreign_first"]}
+            "hard_rule_count": len(goals["hard_rules"]), "foreign_first": goals.get("foreign_first")}
 
 
 def _refs(value: object, evidence: dict) -> list[str]:
@@ -205,7 +206,7 @@ def score_assessment(assessment: dict, goals: dict, *, now: datetime | None = No
     # Sort ascending: decision class first, then verified foreign ownership,
     # then the conservative score and coverage. Failures never outrank passes.
     sort_key = [{"推荐": 0, "待核实": 1, "不推荐": 2}[decision],
-                0 if foreign or not goals["foreign_first"] else 1, -round(lower, 4), -round(coverage, 4), assessment["candidate_id"]]
+                0 if foreign or goals.get("foreign_first") is not True else 1, -round(lower, 4), -round(coverage, 4), assessment["candidate_id"]]
     return {"schema_version": 1, "policy_version": POLICY_VERSION,
             "goal_config_sha256": goal_config_sha256(goals),
             "candidate_id": assessment["candidate_id"], "gate": gate,

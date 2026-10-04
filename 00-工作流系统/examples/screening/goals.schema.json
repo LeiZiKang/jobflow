@@ -8,7 +8,11 @@
       "const": 1
     },
     "foreign_first": {
-      "type": "boolean"
+      "type": [
+        "boolean",
+        "null"
+      ],
+      "description": "Optional. Only true enables ownership-based sorting; null or omission means undecided and adds no ownership preference."
     },
     "dimensions": {
       "type": "object",
@@ -75,7 +79,6 @@
   },
   "required": [
     "schema_version",
-    "foreign_first",
     "dimensions",
     "hard_rules",
     "thresholds"

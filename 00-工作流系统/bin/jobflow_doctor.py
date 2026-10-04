@@ -11,6 +11,13 @@ import sys
 
 from jobflow_profile import ProfileError, load_channel_config, load_goals, profile_directory
 from jobflow_screening import ScreeningError, validate_goals
+from jobflow_environment import console_dependencies_ready, console_directory
+
+
+def profile_copy_command(source: str, name: str) -> str:
+    # Keep private paths out of output; let the user's shell expand its own env.
+    directory = '${JOBFLOW_PROFILE_DIR:-$HOME/.config/jobflow/profile}'
+    return f'mkdir -p "{directory}" && cp -i "{source}" "{directory}/{name}"'
 
 
 def check_readiness(repo_root: Path) -> dict:
@@ -27,12 +34,17 @@ def check_readiness(repo_root: Path) -> dict:
     add("workspace", True, (root / "00-工作流系统/state/current.json").is_file(),
         "运行 python3 00-工作流系统/bin/jobflow.py init。")
     goals_ok = False
-    goals_fix = "按首次使用指南填写个人目录 goals.json，并运行 jobflow_screening.py --validate-profile。"
+    goals_fix = ("确认目标后复制模板并编辑：" + profile_copy_command(
+        "00-工作流系统/examples/screening/goals.example.json", "goals.json")
+        + "；再运行 python3 00-工作流系统/bin/jobflow_screening.py --validate-profile。")
     try:
         goals = load_goals(repo_root=root)
         validate_goals(goals)
         example = json.loads((root / "00-工作流系统/examples/screening/goals.example.json").read_text(encoding="utf-8"))
-        goals_ok = goals != example
+        # Omitted and null sorting preferences both mean undecided. Removing
+        # this field alone must not make an otherwise untouched template ready.
+        goals_ok = {**goals, "foreign_first": goals.get("foreign_first")} != {
+            **example, "foreign_first": example.get("foreign_first")}
         if not goals_ok:
             goals_fix = "还没按你的目标改；请确认目标、权重和硬线后编辑个人目录 goals.json。"
     except (ProfileError, ScreeningError, OSError, ValueError):
@@ -58,7 +70,8 @@ def check_readiness(repo_root: Path) -> dict:
     except (ProfileError, OSError):
         pass
     add("search_channels", True, channels_ok,
-        "确认渠道后，把 config/search_channels.json 复制到个人目录并编辑。")
+        "确认渠道后复制并编辑：" + profile_copy_command(
+            "00-工作流系统/config/search_channels.json", "search_channels.json"))
 
     node_ok = False
     try:
@@ -68,8 +81,8 @@ def check_readiness(repo_root: Path) -> dict:
     except (OSError, subprocess.TimeoutExpired, UnicodeError):
         pass
     add("node", False, node_ok, "控制台需要 Node 20.9 或更新版本；不用控制台可跳过。")
-    add("console_dependencies", False, (root / "console/node_modules").is_dir(),
-        "需要控制台时运行 cd console && npm install。")
+    add("console_dependencies", False, console_dependencies_ready(console_directory(root)),
+        '控制台依赖缺失或不完整；请重新运行 (cd "${JOBFLOW_CONSOLE_DIR:-console}" && npm install)。')
     add("ego_browser", False, shutil.which("ego-browser") is not None,
         "没有它 Agent 只能用未登录浏览器，见 docs/新手指南.md；安装 ego lite 并启用 ego-browser skill。",
         "命令已在 PATH；仍需确认 Agent skill 与平台登录态。")

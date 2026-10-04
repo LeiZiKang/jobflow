@@ -17,6 +17,8 @@ sys.path.insert(0, str(BIN))
 import jobflow
 import jobflow_doctor as doctor
 from jobflow_profile import CHANNEL_CONFIGS, ProfileError, load_channel_config, resolve_channel_config
+from jobflow_environment import console_dependencies_ready
+from jobflow_screening import profile_summary
 
 
 class OnboardingTests(unittest.TestCase):
@@ -31,7 +33,8 @@ class OnboardingTests(unittest.TestCase):
         for name in ("examples/screening", "config"):
             shutil.copytree(BIN.parent / name, self.system / name)
         env = patch.dict(os.environ, {"JOBFLOW_PROFILE_DIR": str(self.profile),
-                                      "JOBFLOW_RUNTIME_DIR": str(self.base / "runtime")})
+                                      "JOBFLOW_RUNTIME_DIR": str(self.base / "runtime"),
+                                      "JOBFLOW_CONSOLE_DIR": str(self.root / "console")})
         env.start()
         self.addCleanup(env.stop)
         node = patch.object(doctor.subprocess, "run", return_value=subprocess.CompletedProcess([], 0, "v20.9.0\n", ""))
@@ -102,6 +105,55 @@ class OnboardingTests(unittest.TestCase):
         self.goals["dimensions"]["salary"]["weight"] = 1
         self.write("goals.json", self.goals)
         self.assertEqual(self.checks()["goals"]["status"], "missing")
+
+    def test_undecided_preference_is_ready_only_after_customizing_goals(self):
+        self.ready()
+        for mode in ("null", "omitted"):
+            if mode == "omitted":
+                self.goals.pop("foreign_first", None)
+            else:
+                self.goals["foreign_first"] = None
+            self.write("goals.json", self.goals)
+            self.assertIsNone(profile_summary(self.goals)["foreign_first"])
+            self.assertEqual(self.cli(["doctor", "--json"])[0], 0)
+        example = json.loads((self.system / "examples/screening/goals.example.json").read_text())
+        example.pop("foreign_first", None)
+        self.write("goals.json", example)
+        self.assertEqual(self.checks()["goals"]["status"], "missing")
+
+    def test_console_requires_both_executable_tools_and_honors_override(self):
+        self.ready()
+        console = self.root / "console"
+        tools = console / "node_modules/.bin"
+        tools.mkdir(parents=True)
+        self.assertEqual(self.checks()["console_dependencies"]["status"], "warn")
+        for name in ("tsc", "next"):
+            path = tools / name
+            path.write_text("#!/bin/sh\nexit 0\n")
+            path.chmod(0o700)
+            expected = "ok" if name == "next" else "warn"
+            self.assertEqual(self.checks()["console_dependencies"]["status"], expected)
+            self.assertEqual(console_dependencies_ready(console), expected == "ok")
+        (tools / "next").chmod(0o600)
+        self.assertFalse(console_dependencies_ready(console))
+        self.assertEqual(self.checks()["console_dependencies"]["status"], "warn")
+        (tools / "next").unlink()
+        (tools / "next").symlink_to(tools / "missing")
+        self.assertFalse(console_dependencies_ready(console))
+        with patch.dict(os.environ, {"JOBFLOW_CONSOLE_DIR": str(self.base / "other-console")}):
+            self.assertEqual(self.checks()["console_dependencies"]["status"], "warn")
+
+    def test_channel_repair_command_can_be_copied_with_quoted_paths(self):
+        directory = self.base / "profile with spaces and ' quote"
+        with patch.dict(os.environ, {"JOBFLOW_PROFILE_DIR": str(directory)}):
+            fix = self.checks()["search_channels"]["fix"]
+            command = fix.split("：", 1)[1]
+            process = subprocess.Popen(command, shell=True, cwd=self.root,
+                                       stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            _, error = process.communicate(timeout=10)
+            self.assertEqual(process.returncode, 0, error)
+        self.assertEqual(json.loads((directory / "search_channels.json").read_text()),
+                         json.loads((self.system / "config/search_channels.json").read_text()))
 
     def test_doctor_is_read_only_and_checks_are_independent(self):
         self.ready()

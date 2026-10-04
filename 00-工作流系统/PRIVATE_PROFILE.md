@@ -6,11 +6,11 @@ author: codex · 2026-09-22
 
 个人目录为 `JOBFLOW_PROFILE_DIR`，默认 `~/.config/jobflow/profile/`，建议目录权限 0700，文件权限 0600。
 
-- `goals.json`：求职方向、硬线、维度权重、评价尺度和推荐阈值。检索与评分读取此文件。
+- `goals.json`：求职方向、硬线、维度权重、评价尺度和推荐阈值。检索与评分读取此文件。`foreign_first` 未回答写 null，也可缺省；仅 true 启用同组外企优先，未定不阻塞评分。
 - `identity.json`：既有简历的基本身份字段，按用户授权复制，不改事实。检索和评分不读取；只有明确的投递材料准备才按需读取。
-- `search_channels.json` / `inbound_sources.json`：确认后从 `config/` 复制到个人目录再编辑。统一用 `jobflow.py config <文件名>` 读取；个人覆盖优先，无覆盖才用模板，损坏或不安全链接不回退。
+- `search_channels.json` / `inbound_sources.json`：确认后从 `00-工作流系统/config/` 复制到个人目录再编辑。统一用 `jobflow.py config <文件名>` 读取；个人覆盖优先，无覆盖才用模板，损坏或不安全链接不回退。
 - `onboarding.json`：经用户确认的访谈记录，未回答用 null；不直接参与评分。
-- 公共接口与虚构示例在 `examples/screening/`。更换用户时替换外置文件，不修改评分引擎。
+- 公共接口与虚构示例在 `00-工作流系统/examples/screening/`。更换用户时替换外置文件，不修改评分引擎。
 
 `python3 00-工作流系统/bin/jobflow_screening.py --validate-profile` 只输出校验、权重与配置哈希，不输出身份或目标正文。
 

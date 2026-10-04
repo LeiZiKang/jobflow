@@ -9,7 +9,7 @@ Goals, progress, evidence, and approvals each have a defined home. A new agent o
 ## How it works
 
 - The repository holds state, tasks, evidence, and reports. Personal goals and channel settings live outside it.
-- One lead agent, the Decider, makes decisions and assigns bounded task envelopes to executing agents.
+- One lead agent, the Decider, coordinates the work; a task envelope is a short work order stating what another agent should do, what it may do, and when to stop.
 - Hard rules, scoring weights, and evidence coverage determine recommendations. Scores are not hiring probabilities.
 - External schedulers trigger runs; the repository defines their scope.
 - A local console shows candidates, applications, reports, and agent runs. The CLI also works on its own.
@@ -28,11 +28,11 @@ Read the [getting-started guide](docs/getting-started.en.md). Think about your g
 ## Quick start
 
 ```bash
-git clone <repo-url>
+git clone https://github.com/LeiZiKang/jobflow.git
 cd jobflow
 ```
 
-Open the repository in your agent and say “Help me set up jobflow.” The [onboarding runbook](00-工作流系统/runbooks/首次使用.md) guides it through 2–4 questions at a time. It repeats your answers back and asks for confirmation before writing files.
+Open the repository in your agent and say “Help me set up jobflow.” The [onboarding runbook](00-工作流系统/runbooks/onboarding.en.md) guides it to ask only for missing information, usually 2–4 questions at a time. If you provide several answers at once, it can summarize them together for one confirmation before writing files.
 
 You can also start manually:
 
@@ -43,7 +43,7 @@ python3 00-工作流系统/bin/jobflow.py doctor
 
 `00-工作流系统` means workflow system and contains the engine. Doctor normally returns 1 after the first init: you still need customized goals, a resume, and confirmed channels.
 
-`config/search_channels.json` and `config/inbound_sources.json` under that directory are default templates. After agreeing on scope, copy them to `JOBFLOW_PROFILE_DIR` (default `~/.config/jobflow/profile/`) and edit the copies. Keep personal preferences out of tracked files. See the getting-started guide for steps. Personal overrides take precedence; templates are used only when an override is absent:
+`00-工作流系统/config/search_channels.json` and `00-工作流系统/config/inbound_sources.json` are default templates. After agreeing on scope, copy them to `JOBFLOW_PROFILE_DIR` (default `~/.config/jobflow/profile/`) and edit the copies. Keep personal preferences out of tracked files. See the getting-started guide for steps. Personal overrides take precedence; templates are used only when an override is absent:
 
 ```bash
 python3 00-工作流系统/bin/jobflow.py config search_channels.json
@@ -52,7 +52,7 @@ python3 00-工作流系统/bin/jobflow.py doctor --json
 ./00-工作流系统/scripts/check-all.sh
 ```
 
-**Ready** means every required doctor check is ok and check-all passes. Doctor does not print goals or identity content. Missing Node, console dependencies, ego-browser, or identity.json only produces warnings and does not change doctor's exit code. Platform logins and actual access still need verification. Start with one manual, read-only job search.
+**Ready** means every required doctor check is ok and check-all passes. Doctor does not print goals or identity content. Missing Node, console dependencies, ego-browser, or identity.json only produces warnings and does not change doctor's exit code. Both `.bin/tsc` and `.bin/next` must be executable for console dependencies to pass; incomplete installs need another npm install. An unanswered `foreign_first` stays null: scoring works without ownership-based sorting. Platform logins and actual access still need verification. Start with one manual, read-only job search.
 
 To explore fictional demo data first:
 
@@ -76,6 +76,8 @@ Open `http://127.0.0.1:8788`. On macOS, you can also double-click `打开本地�
 
 For a read-only dashboard without Node: `./打开看板.command` (open dashboard).
 For the macOS menu bar app: `./00-工作流系统/menubar-app/build.sh`.
+
+The daily and scheduling runbooks below are currently in Chinese; your agent can help you follow them.
 
 ## Daily workflow
 

@@ -14,6 +14,7 @@
 如果 `00-工作流系统/state/current.json` 不存在，或 doctor 必需项不全（退出码 1），
 先读 `00-工作流系统/runbooks/首次使用.md`，按阶段访谈并补齐。已有 state 时不要重复 init。
 纯引擎开发使用临时 profile/runtime 做验收，无需开发者填写真实资料。
+英文用户改读 [English onboarding](runbooks/onboarding.en.md)。
 
 0. 想先看全貌：用浏览器打开 `00-工作流系统/系统架构.html`——分层、角色、派活方式、
    状态机、证据等级、审批门和当前实现进度都在里面。看完再按下面顺序走。

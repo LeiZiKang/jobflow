@@ -4,6 +4,8 @@
 
 先运行 `python3 00-工作流系统/bin/jobflow.py doctor`。如果 `00-工作流系统/state/current.json` 不存在，或 doctor 必需项不全（退出码 1），先读 `00-工作流系统/runbooks/首次使用.md`，分阶段带用户补齐准备。已有 state 时不重复 init。纯引擎开发使用临时 profile/runtime 验收，不要求开发者填写真实求职资料。
 
+For English-speaking users, follow [the English onboarding runbook](00-工作流系统/runbooks/onboarding.en.md) and [getting started](docs/getting-started.en.md). The Chinese and English onboarding runbooks are equivalent; the Chinese version takes precedence if they differ.
+
 ## 红线
 
 1. 对外动作一律先要用户批准。包括投递、发消息、跟进、改平台资料、接受条款。已批准范围不得扩大。

@@ -34,10 +34,10 @@ PYTHONDONTWRITEBYTECODE=1 python3 -m unittest -q \
   00-工作流系统/local-control/test_runtime_adapters.py \
   00-工作流系统/local-control/test_jobflowd.py
 CONSOLE_DIR="${JOBFLOW_CONSOLE_DIR:-$ROOT/console}"
-if [ -x "$CONSOLE_DIR/node_modules/.bin/tsc" ]; then
+if python3 00-工作流系统/bin/jobflow_environment.py "$CONSOLE_DIR"; then
   (cd "$CONSOLE_DIR" && npm run typecheck --silent -- --incremental false)
 elif [ -f "$CONSOLE_DIR/package.json" ]; then
-  echo "WARN: console dependencies are not installed; skipping TypeScript check"
+  echo "WARN: console dependencies are missing or incomplete (tsc/next); rerun npm install in the console directory; skipping TypeScript check"
 else
   echo "WARN: console repo not found at $CONSOLE_DIR; skipping TypeScript check"
 fi

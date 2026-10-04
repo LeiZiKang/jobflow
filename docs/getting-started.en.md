@@ -27,22 +27,29 @@ Place your resume in `03-简历/` (resumes); subfolders are supported. README fi
 
 ## What the first conversation covers
 
-Open the repository in your agent and say “Help me set up jobflow.” It will ask 2–4 questions at a time, repeat your answers back, and wait for confirmation before writing files:
+Open the repository in your agent and say “Help me set up jobflow.” The [English onboarding runbook](../00-工作流系统/runbooks/onboarding.en.md) tells it to ask only for missing information, usually 2–4 questions at a time. If you give several stages of answers at once, it can summarize them together for one confirmation before writing. Explicit permission for a specific write does not need to be requested again; silence or “skip” is not confirmation:
 
 1. Your system, agent, and missing tools. Would you like a demo or an empty workspace?
 2. Target roles and seniority. Which cities, remote arrangements, and commutes work for you?
 3. Preferred industries or employer types: foreign-owned, domestic, or either?
 4. Minimum and target pay, including currency and pay basis. When could you start?
 5. What matters most? Example weights are technical experience 30, working hours 25, growth 20, pay 15, and culture and leave 10. Add or remove factors; the total must be 100.
-6. Keep or change the example thresholds: a supported score of 75, evidence coverage of 80, and rejection when even the upper bound is below 50? Prefer verified foreign-owned employers within the same recommendation group? Scores are not hiring probabilities.
+6. Keep or change the example thresholds: a supported score of 75, evidence coverage of 80, and rejection when even the upper bound is below 50? Prefer verified foreign-owned employers within the same recommendation group? An unanswered `foreign_first` stays null; scoring still works without ownership-based sorting. Scores are not hiring probabilities.
 7. Deal-breakers, such as client-site outsourcing, a one-person team, or sustained extreme overtime?
 8. Set up ego lite? Which platforms should be used, and which are already signed in?
 9. Which resumes, portfolio links, and existing opportunities should be included? Would you like to provide an optional identity.json?
 10. Use the console or scheduled tasks?
 
-Unanswered questions stay null or undecided in your personal `onboarding.json`. The current scoring contract requires explicit weights, thresholds, a foreign-employer preference flag, and at least one hard rule. If these are undecided, or you have no hard rules, the agent will explain that scoring is not ready. It must not invent answers to pass validation. Details such as your start date stay in the interview record rather than being forced into the scoring format.
+Unanswered questions stay null or undecided in your personal `onboarding.json`. The current scoring contract requires explicit weights, thresholds, and at least one hard rule. If these are undecided, or you have no hard rules, the agent will explain that scoring is not ready. It must not invent answers to pass validation. `foreign_first` accepts true, false, null, or omission. Only true enables a preference for verified foreign-owned employers within a group. Null or omission means undecided and does not block scoring; the agent must not substitute true or false. Details such as your start date stay in the interview record rather than being forced into the scoring format.
 
 ## Start manually and check readiness
+
+Clone the repository and enter it:
+
+```bash
+git clone https://github.com/LeiZiKang/jobflow.git
+cd jobflow
+```
 
 From the repository root:
 
@@ -59,12 +66,12 @@ Complete the interview with your agent, or edit your personal goals using the st
 PROFILE_DIR="${JOBFLOW_PROFILE_DIR:-$HOME/.config/jobflow/profile}"
 mkdir -p "$PROFILE_DIR"
 # -i asks before replacing an existing file
-cp -i 00-工作流系统/config/search_channels.json "$PROFILE_DIR/search_channels.json"
+cp -i "00-工作流系统/config/search_channels.json" "$PROFILE_DIR/search_channels.json"
 # Only if you want inbox checks and have agreed on their scope
-cp -i 00-工作流系统/config/inbound_sources.json "$PROFILE_DIR/inbound_sources.json"
+cp -i "00-工作流系统/config/inbound_sources.json" "$PROFILE_DIR/inbound_sources.json"
 ```
 
-Trim `required_daily` / `sources`. Update search terms, location, coverage requirements, and the company list. The default companies are fictional examples. Keep personal preferences out of the tracked config templates. Do not create the search_channels override until you have decided. An explicitly agreed empty list is valid if you only want to supply job listings manually.
+Trim `required_daily` / `sources`. Update search terms, location, coverage requirements, and the company list. Fill every template placeholder from the interview, including role keywords, target location or remote work, pay, hard rules, and target companies. Do not carry placeholders into a working configuration. A null daily company count means the coverage requirement has not been agreed yet. Keep personal preferences out of the tracked config templates. Do not create the search_channels override until you have decided. An explicitly agreed empty list is valid if you only want to supply job listings manually.
 
 ```bash
 python3 00-工作流系统/bin/jobflow_screening.py --validate-profile
@@ -73,7 +80,7 @@ python3 00-工作流系统/bin/jobflow.py doctor --json
 ./00-工作流系统/scripts/check-all.sh
 ```
 
-Doctor has **five required checks**: Python, initialized state, valid goals that differ from the example, a resume, and a personal channels override. All must be ok for exit code 0; otherwise it returns 1. Missing Node, console dependencies, ego-browser, or identity.json only produces warnings.
+Doctor has **five required checks**: Python, initialized state, valid goals that differ from the example, a resume, and a personal channels override. All must be ok for exit code 0; otherwise it returns 1. Missing Node, console dependencies, ego-browser, or identity.json only produces warnings. Console dependencies pass only when both `console/node_modules/.bin/tsc` and `.bin/next` exist and are executable. An empty or incomplete install produces a warning: rerun `(cd "console" && npm install)`. Doctor and check-all share this check. Installed dependencies do not prove that the build passes.
 
 Doctor prints no goals or identity content and does not sign in to websites. The config command does print your selected channel configuration; do not paste it into a public issue.
 
@@ -101,7 +108,7 @@ User data inside the repository is ignored by Git by default. If you want to ver
 Run `python3 00-工作流系统/bin/jobflow.py init --demo`. Use `init --force` to reset afterward. Existing core state is backed up to `00-工作流系统/.init-backup-*`. Business files listed in the demo manifest are removed, so do not put real information into demo files. Personal configuration is preserved.
 
 **Why does doctor say my goals are unchanged after init?**
-Init copies a fictional example. Customize its content and pass profile validation. Whitespace, indentation, and key order do not count as changes.
+Init copies a neutral template with placeholders. Customize its content and pass profile validation. Whitespace, indentation, and key order do not count as changes.
 
 **Can I start without identity details?**
 Yes. identity.json is only needed when preparing application materials. It is not required for search or readiness.
@@ -116,4 +123,5 @@ The check only confirms that the command exists. Skill availability and active l
 Confirm that init has completed, then inspect the first error. Share a version of the error without personal data with your agent. Do not fabricate data to pass. Without console dependencies, the TypeScript check is skipped with a warning; install them for full console validation.
 
 **How do I schedule runs?**
+The scheduling documents below are currently in Chinese; your agent can help you follow them.
 Start with a successful manual run. Then read the [scheduling contract](../00-工作流系统/adapters/SCHEDULED_COMMON.md) and the instructions for [Claude Code](../00-工作流系统/adapters/CLAUDE_CODE_SCHEDULED.md) or [Codex](../00-工作流系统/adapters/CODEX_SCHEDULED.md). External actions still require separate approval.

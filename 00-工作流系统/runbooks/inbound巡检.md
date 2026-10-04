@@ -6,7 +6,7 @@ author: codex · 2026-09-22
 
 用 `python3 00-工作流系统/bin/jobflow.py config inbound_sources.json` 读取有效配置。
 优先读取 `JOBFLOW_PROFILE_DIR/inbound_sources.json`，没有覆盖才回退到默认模板。
-需要调整时先复制 `config/inbound_sources.json` 到个人目录再编辑。模板不等于授权，
+需要调整时先复制 `00-工作流系统/config/inbound_sources.json` 到个人目录再编辑。模板不等于授权，
 岗位搜索授权也不包括邮箱、Slack 或平台收件箱；先确认来源与范围。
 
 ## 执行与窗口

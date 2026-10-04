@@ -157,6 +157,7 @@ class ScreeningTests(unittest.TestCase):
                 self.assertNotIn("真外企", self.score()["tags"])
 
     def test_foreign_first_within_decision_class(self):
+        self.goals["foreign_first"] = True
         foreign = self.score()
         self.assessment["ownership"]["status"] = "unknown"
         self.assessment["dimensions"]["culture_leave"].update(value=1, evidence_refs=["team"])
@@ -167,6 +168,32 @@ class ScreeningTests(unittest.TestCase):
         self.assessment["ownership"]["status"] = "verified_foreign"
         self.assessment["dimensions"]["culture_leave"]["value"] = None
         self.assertLess(other["sort_key"], self.score()["sort_key"])
+
+    def test_undecided_ownership_preference_does_not_block_or_prioritize(self):
+        for mode in ("null", "omitted", "false"):
+            with self.subTest(mode=mode):
+                if mode == "omitted":
+                    self.goals.pop("foreign_first", None)
+                else:
+                    self.goals["foreign_first"] = None if mode == "null" else False
+                before = copy.deepcopy(self.goals)
+                self.assessment["ownership"]["status"] = "verified_foreign"
+                self.assessment["dimensions"]["culture_leave"]["value"] = None
+                foreign = self.score()
+                self.assessment["ownership"]["status"] = "unknown"
+                self.assessment["dimensions"]["culture_leave"].update(value=1, evidence_refs=["team"])
+                other = self.score()
+                self.assertEqual(foreign["decision"], "推荐")
+                self.assertEqual(foreign["sort_key"][1], other["sort_key"][1])
+                self.assertLess(other["sort_key"], foreign["sort_key"])
+                self.assertEqual(profile_summary(self.goals)["foreign_first"], self.goals.get("foreign_first"))
+                self.assertEqual(before, self.goals)
+
+    def test_ownership_preference_rejects_non_boolean_non_null_values(self):
+        for invalid in (0, 1, "false", "null", [], {}):
+            self.goals["foreign_first"] = invalid
+            with self.assertRaises(ScreeningError):
+                profile_summary(self.goals)
 
     def test_inputs_unchanged_and_output_has_no_identity(self):
         previous = copy.deepcopy((self.assessment, self.goals))

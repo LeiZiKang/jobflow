@@ -2,7 +2,7 @@
 """Runtime 路径解析。
 
 runtime 目录放的是 SQLite run ledger（WAL 模式，守护进程运行期间持续重写）、
-bearer token、pid 和 lock。它**不放在仓库里**，两个理由：
+bearer token、pid 和 lock。它**默认不放在仓库里**，两个理由：
 
 1. 它是运行产物，不是仓库内容。仓库是求职工作的持久记忆，只该有纯文本。
 2. 里面有 jobflowd 的 bearer token。放在工作树之外，就不存在被 `git add -f`
@@ -18,8 +18,9 @@ bearer token、pid 和 lock。它**不放在仓库里**，两个理由：
 
 同一条规则也写在 `local-control/start.sh`，两边必须一致。
 
-runtime 外置这条是开源默认约束：仓库只保存可审计文本状态，运行锁和 token
-永远放在工作树之外。
+runtime 外置是开源默认配置：版本控制只保存可审计文本状态，运行锁和 token
+默认放在工作树之外；沙箱环境也可通过 JOBFLOW_RUNTIME_DIR 指向
+仓库内被忽略的 tmp/runtime/，不得跟踪或发布。个人 profile 仍必须在仓库外。
 """
 
 from __future__ import annotations
