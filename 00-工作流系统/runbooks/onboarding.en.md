@@ -5,7 +5,7 @@ The two versions are equivalent. If they differ, the Chinese version takes prece
 
 # First use: an agent-led setup interview
 
-Use this when state is missing or a required `jobflow.py doctor` check has not passed.
+Use this when state is missing or a required `jobflow.py doctor --lang en` check has not passed.
 User-facing checklists: [English](../../docs/getting-started.en.md) / [中文](../../docs/新手指南.md).
 
 The stages below are an information checklist, not a questionnaire that must be read out in full. Ask only for missing information, usually 2–4 questions at a time. If the user provides answers for several stages at once, summarize the answers, undecided items, and proposed files together. One confirmation can cover those writes; separate confirmation for every stage is not required.
@@ -15,7 +15,7 @@ Do not ask again for explicit permission already given for a specific write, and
 ## 0. Environment
 
 ```bash
-python3 00-工作流系统/bin/jobflow.py doctor
+python3 00-工作流系统/bin/jobflow.py doctor --lang en
 ```
 
 `00-工作流系统` is the workflow system directory. A failed readiness check is normal on first use. If Python cannot run, check `python3 --version`. Python 3.9+ is required; Node 20.9+ is only needed for the console. Explain missing Python or Node requirements without installing system software yourself. `--json` returns structured results without goals or identity content.
@@ -62,8 +62,11 @@ Then ask:
 
 1. What are your minimum and target pay? Confirm currency, gross or net, monthly or annual pay, and number of salary payments.
 2. When could you start? Leave it undecided if necessary.
+3. Do you have an application-count target? If not, leave it unset. This means cumulative verified applications, not a default quota.
 
 After summarizing and confirming, save the answers in the personal `onboarding.json`, not in public configuration. This is an interview record, not a scoring input. Suggested fields are `role_direction`, `level`, `locations`, `remote`, `commute`, `industries`, `company_type`, `salary_floor`, `salary_target`, `salary_basis`, and `earliest_start`. Use null for unanswered fields. Add confirmed answers from later stages to this record too.
+
+When no target is set, keep `metrics.diagnostic_sample_target` and `metrics.gap_to_target` null in `00-工作流系统/state/current.json`. Do not substitute 15 or 0. Only after the user confirms a number, set a nonnegative integer target and calculate gap as max(target minus verified count, 0). Then run `python3 00-工作流系统/bin/jobflow.py brief --write` and `python3 00-工作流系统/bin/jobflow.py render-views --write`. The demo target of 15 is fictional.
 
 Resolve the personal directory through `jobflow_profile.profile_directory()`. It defaults to `~/.config/jobflow/profile/`, can be overridden with `JOBFLOW_PROFILE_DIR`, and must be outside the repository. See [PRIVATE_PROFILE.md](../PRIVATE_PROFILE.md) (Chinese).
 
@@ -168,7 +171,7 @@ Open `http://127.0.0.1:8788`. On macOS, the root launcher can also be opened by 
 ## 8. Ready
 
 ```bash
-python3 00-工作流系统/bin/jobflow.py doctor
+python3 00-工作流系统/bin/jobflow.py doctor --lang en
 ./00-工作流系统/scripts/check-all.sh
 ```
 

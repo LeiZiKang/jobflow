@@ -37,7 +37,23 @@
         "submitted_verified",
         "diagnostic_sample_target",
         "gap_to_target"
-      ]
+      ],
+      "properties": {
+        "diagnostic_sample_target": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "gap_to_target": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        }
+      }
     },
     "next_action_ids": {
       "type": "array",

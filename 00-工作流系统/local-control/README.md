@@ -12,7 +12,7 @@
 
 SQLite 位于工作树之外的 `~/.local/state/jobflow/`（`JOBFLOW_RUNTIME_DIR` 可覆盖）。
 **不要把它放回仓库**：它是运行产物不是仓库内容，而且里面有 jobflowd 的 bearer token，
-放在树外就不存在被误提交的可能。路径解析写在 `bin/jobflow_paths.py`，
+放在树外就不存在被误提交的可能。路径解析写在 `00-工作流系统/bin/jobflow_paths.py`，
 它保存 run、事件和 provider session
 引用；删除后不会丢失 canonical 求职状态。访问 controller 需要启动时生成的 mode-600 bearer
 token，浏览器端拿不到该 token。
@@ -36,7 +36,7 @@ Search run 最长 180 秒，其他 run 最长 300 秒；关闭控制台时只终
 - 自动处理登录、验证码或失效账号。
 - 把 SQLite、provider transcript 或生成 HTML 当作业务真相。
 
-长期记忆位于 `state/memory.json`，由 `bin/memoryctl.py` 管理。`context_builder.py` 只把
+长期记忆位于 `state/memory.json`，由 `python3 00-工作流系统/bin/memoryctl.py` 管理。`context_builder.py` 只把
 accepted、未过期、与当前 scope 相关的记忆注入 Agent prompt；完整旧 session 不会自动进入。
 
 Runtime adapters 强制 Codex `read-only` sandbox；Claude 只开放 Read/Glob/Grep/WebSearch/WebFetch。

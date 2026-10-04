@@ -55,8 +55,8 @@ export type Overview = {
   updated_at?: string;
   metrics?: {
     submitted_verified?: number;
-    diagnostic_sample_target?: number;
-    gap_to_target?: number;
+    diagnostic_sample_target?: number | null;
+    gap_to_target?: number | null;
     candidate_dossiers_in_latest_comparison?: number;
     interviewing?: number;
     awaiting_user?: number;

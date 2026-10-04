@@ -55,7 +55,7 @@ From the repository root:
 
 ```bash
 python3 00-工作流系统/bin/jobflow.py init
-python3 00-工作流系统/bin/jobflow.py doctor
+python3 00-工作流系统/bin/jobflow.py doctor --lang en
 ```
 
 `00-工作流系统` is the workflow engine directory. The first init creates state and example goals. Doctor will normally exit with code 1: customized goals, a resume, and confirmed channels are still missing.
@@ -76,7 +76,7 @@ Trim `required_daily` / `sources`. Update search terms, location, coverage requi
 ```bash
 python3 00-工作流系统/bin/jobflow_screening.py --validate-profile
 python3 00-工作流系统/bin/jobflow.py config search_channels.json
-python3 00-工作流系统/bin/jobflow.py doctor --json
+python3 00-工作流系统/bin/jobflow.py doctor --lang en --json
 ./00-工作流系统/scripts/check-all.sh
 ```
 

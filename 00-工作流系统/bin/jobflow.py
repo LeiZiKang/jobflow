@@ -26,6 +26,7 @@ from jobflow_writes import mutation, read_snapshot
 import jobflow_progress
 import jobflow_catalog
 import jobflow_evidence
+from jobflow_metrics import verified_progress
 from jobflow_profile import CHANNEL_CONFIGS, ProfileError, load_channel_config
 
 
@@ -409,7 +410,7 @@ class JobflowRepo:
         task = self._task(
             "task-review-workspace",
             "审阅新工作区并填写个人求职配置",
-            "确认 profile/goals.json、简历材料和目标渠道是否已经按用户情况补齐；只读检查，不对外发送。",
+            "确认 $JOBFLOW_PROFILE_DIR/goals.json（默认 ~/.config/jobflow/profile/goals.json）、简历材料和目标渠道是否已经按用户情况补齐；只读检查，不对外发送。",
             1,
             ["00-工作流系统/START_HERE.md", "01-现在在做/状态总览.md"],
         )
@@ -424,8 +425,8 @@ class JobflowRepo:
                 "current_summary": ["新工作区已初始化", "尚未登记真实投递或候选岗位"],
                 "metrics": {
                     "submitted_verified": 0,
-                    "diagnostic_sample_target": 15,
-                    "gap_to_target": 15,
+                    "diagnostic_sample_target": None,
+                    "gap_to_target": None,
                     "candidate_dossiers_in_latest_comparison": 0,
                 },
                 "next_action_ids": [task["task_id"]],
@@ -615,6 +616,7 @@ class JobflowRepo:
         state["current.json"]["current_summary"] = ["Demo workspace contains fictional candidates and applications.", "All companies and evidence are synthetic."]
         state["current.json"]["metrics"].update(
             submitted_verified=2,
+            diagnostic_sample_target=15,
             gap_to_target=13,
             candidate_dossiers_in_latest_comparison=len(candidates),
         )
@@ -1251,7 +1253,9 @@ class JobflowRepo:
             )
         target = metrics.get("diagnostic_sample_target")
         gap = metrics.get("gap_to_target")
-        if isinstance(target, int) and gap != max(target - verified_count, 0):
+        if target is not None and (type(target) is not int or target < 0):
+            errors.append("current.json: diagnostic_sample_target must be null or a nonnegative integer")
+        if (target is None and gap is not None) or (type(target) is int and gap != max(target - verified_count, 0)):
             errors.append("current.json: metrics.gap_to_target is inconsistent")
 
         case_root = self.repo_root / "04-面试/公司"
@@ -1634,7 +1638,7 @@ class JobflowRepo:
                 "",
                 f"当前阶段：`{current.get('current_phase', 'unknown')}`",
                 "",
-                f"已验证投递：**{metrics.get('submitted_verified', 0)} / {metrics.get('diagnostic_sample_target', '?')}**",
+                f"已验证投递：**{verified_progress(metrics)}**",
             ]
         )
         accepted_memory = self.memory_store.list_items(status="accepted")[:8]
@@ -1890,7 +1894,7 @@ class JobflowRepo:
             "",
             "| 项 | 状态 |",
             "|---|---|",
-            f"| **已验证投递** | **{metrics.get('submitted_verified', 0)} / {metrics.get('diagnostic_sample_target', '—')}** |",
+            f"| **已验证投递** | **{verified_progress(metrics)}** |",
             f"| 当前阶段 | `{_md(current.get('current_phase') or '—')}` |",
             f"| 最新候选池 | {len(candidates)} 个；{waiting_candidates} 个等待用户决定 |",
             f"| 活跃投递 | {len(active_apps)} 个 |",
@@ -3434,8 +3438,8 @@ class JobflowRepo:
         current = self.load("current.json")
         metrics = current.setdefault("metrics", {})
         metrics["submitted_verified"] = verified_count
-        target = metrics.get("diagnostic_sample_target", 15)
-        metrics["gap_to_target"] = max(target - verified_count, 0)
+        target = metrics.get("diagnostic_sample_target")
+        metrics["gap_to_target"] = max(target - verified_count, 0) if target is not None else None
         current["updated_at"] = _iso(now)
         _atomic_write_json(self.state_dir / "current.json", current)
         self.record_event(
@@ -3661,6 +3665,7 @@ def build_parser() -> argparse.ArgumentParser:
     init.add_argument("--force", action="store_true", help="replace existing generated state")
     doctor = sub.add_parser("doctor", help="check onboarding readiness without printing personal data")
     doctor.add_argument("--json", action="store_true", help="print structured readiness checks")
+    doctor.add_argument("--lang", choices=("en", "zh"), help="output language; defaults to JOBFLOW_LANG, then LANG")
     config = sub.add_parser("config", help="read effective channel config (private override before template)")
     config.add_argument("name", choices=CHANNEL_CONFIGS)
     sub.add_parser("validate", help="validate canonical state and generated brief")
@@ -3818,7 +3823,7 @@ def main(argv: list[str] | None = None) -> int:
     repo = JobflowRepo()
     if args.command == "doctor":
         from jobflow_doctor import run_doctor
-        return run_doctor(repo.repo_root, as_json=args.json)
+        return run_doctor(repo.repo_root, as_json=args.json, lang=args.lang)
     if args.command == "config":
         try:
             print(json.dumps(load_channel_config(args.name, repo_root=repo.repo_root), ensure_ascii=False, indent=2))
@@ -3883,10 +3888,9 @@ def main(argv: list[str] | None = None) -> int:
         metrics = current.get("metrics", {})
         print(current.get("ultimate_goal", ""))
         print(f"phase={current.get('current_phase')}")
-        print(
-            f"submitted_verified={metrics.get('submitted_verified')}/"
-            f"{metrics.get('diagnostic_sample_target')} gap={metrics.get('gap_to_target')}"
-        )
+        progress = verified_progress(metrics, separator="/")
+        gap = f" gap={metrics.get('gap_to_target')}" if metrics.get("diagnostic_sample_target") is not None else ""
+        print(f"submitted_verified={progress}{gap}")
         print(f"applications={len(applications.get('applications', []))}")
         print(
             f"memory_revision={memory_doc.get('revision')} "

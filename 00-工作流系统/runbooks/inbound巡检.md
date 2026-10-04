@@ -18,7 +18,7 @@ author: codex · 2026-09-22
 5. 确认发送方和时间后分类：新主动联系、已投回复、面试安排、自动回执、需人工确认。我方消息、平台推广、纯广告不算新inbound。
 6. 按平台消息ID去重；缺ID用来源+发送方+时间+正文指纹。跨渠道疑似相同邀约关联但保留证据。与applications及历史草稿比对，已投回复不新建候选。
 7. 每条写联系人/公司、岗位、联系时间、要点、来源、目标偏差、建议回/先问清/不建议及理由。只起草，发送另批。
-8. 合并JSON后用 bin/inbound_digest.py --input <observation.json> --output-dir 05-检索报告/主动联系日报 生成日期HTML及index.html，工作台“报告”自动收录。
+8. 合并JSON后用 python3 00-工作流系统/bin/inbound_digest.py --input <observation.json> --output-dir 05-检索报告/主动联系日报 生成日期HTML及index.html，工作台“报告”自动收录。
 9. record-run写coverage及报告路径；validate/check-all后释放租约。没有新联系也生成日报；未查成明确原因。无实质变化通知保持安静，日报仍更新。
 
 ## 证据与建议

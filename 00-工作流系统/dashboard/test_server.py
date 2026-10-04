@@ -61,6 +61,21 @@ class DashboardTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "JSON 损坏"):
             dashboard.Repo(root).load("current.json")
 
+    def test_unset_target_shows_only_canonical_verified_count(self):
+        root = self.make_repo()
+        path = root / dashboard.SYSTEM_DIR / "state/current.json"
+        path.write_text(json.dumps({"metrics": {"submitted_verified": 3,
+                                               "diagnostic_sample_target": None,
+                                               "gap_to_target": None}}))
+        original = dashboard.REPO
+        dashboard.REPO = dashboard.Repo(root)
+        self.addCleanup(setattr, dashboard, "REPO", original)
+        body = dashboard.render_overview().decode()
+        self.assertIn('class="v">3 ', body)
+        self.assertNotIn("还差", body)
+        self.assertNotIn("/ None", body)
+        self.assertNotIn("/ 15", body)
+
     def test_enabled_daily_job_shows_local_schedule(self):
         root = self.make_repo()
         path = root / dashboard.SYSTEM_DIR / "state" / "recurring_jobs.json"

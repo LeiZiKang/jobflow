@@ -20,7 +20,7 @@
    状态机、证据等级、审批门和当前实现进度都在里面。看完再按下面顺序走。
 1. 完整读取 `00-工作流系统/CONSTITUTION.md`。
 2. 完整读取 `00-工作流系统/DECIDER_BRIEF.md`。
-   求职检索/推荐还须读取仓库外 `JOBFLOW_PROFILE_DIR/goals.json`（默认 `~/.config/jobflow/profile/goals.json`），先用 `bin/jobflow_screening.py --validate-profile` 校验。身份文件不用于检索；边界见 `PRIVATE_PROFILE.md`。缺配置报告阻塞，不拿虚构示例替用户目标。
+   求职检索/推荐还须读取仓库外 `JOBFLOW_PROFILE_DIR/goals.json`（默认 `~/.config/jobflow/profile/goals.json`），先用 `python3 00-工作流系统/bin/jobflow_screening.py --validate-profile` 校验。身份文件不用于检索；边界见 `PRIVATE_PROFILE.md`。缺配置报告阻塞，不拿虚构示例替用户目标。
 3. 运行：
 
    ```bash
@@ -38,14 +38,14 @@
 
 4. 如果担任主 Decider，读 `00-工作流系统/DECIDER_PROTOCOL.md` **和**
    `00-工作流系统/SUBAGENT_PROTOCOL.md`——派活的信封由 Decider 写，所以 Decider 必须懂信封规格。
-   派单不要手写：定时任务用 `jobflow.py job-envelope --job <id>`，一次性任务用
-   `jobflow.py bootstrap-prompt --role executor --task-id <id>`。
+   派单不要手写：定时任务用 `python3 00-工作流系统/bin/jobflow.py job-envelope --job <id>`，一次性任务用
+   `python3 00-工作流系统/bin/jobflow.py bootstrap-prompt --role executor --task-id <id>`。
    如果只是执行子任务，读 `00-工作流系统/SUBAGENT_PROTOCOL.md` 和任务指定的 runbook。
 5. 只按任务需要读取岗位档案、简历或历史决策。不要从根目录开始无差别通读。
 6. 开工前向用户简短复述：当前目标、当前状态、下一步和需要审批的事项。
 
 已领取 Decider 租约后，设置 `JOBFLOW_SESSION_REF` 为自己的 session-ref，执行
-`jobflow.py sync-progress --actor <自己>`，再看 `jobflow.py next` 与
+`python3 00-工作流系统/bin/jobflow.py sync-progress --actor <自己>`，再看 `python3 00-工作流系统/bin/jobflow.py next` 与
 `00-工作流系统/推进求职.html`。日常执行方式见 `runbooks/推进求职.md`。
 已批准岗位独立准备；不要再等整批候选全部决定，不要把岗位批准当成最终文字/附件批准。
 
@@ -64,8 +64,8 @@
 |---|---|
 | `00-工作流系统/` | 引擎：协议、CLI、runbook、本地服务、测试 |
 | `console/` | Next.js 控制台（`JOBFLOW_CONSOLE_DIR` 可覆盖） |
-| `00-工作流系统/state/` `events/` `evidence/` `approvals/` | 用户的结构化状态与证据，由 `jobflow.py init` 生成 |
-| `01-现在在做/` … `05-检索报告/` | 用户的业务文档，由 `init` 生成 |
+| `00-工作流系统/state/` `events/` `evidence/` `approvals/` | 用户的结构化状态与证据，由 `python3 00-工作流系统/bin/jobflow.py init` 生成 |
+| `01-现在在做/` … `05-检索报告/` | 用户的业务文档，由 `python3 00-工作流系统/bin/jobflow.py init` 生成 |
 
 用户数据目录默认被 `.gitignore` 忽略，避免误推到公开仓库。用户如果把自己的副本放在
 **私有**仓库里并希望版本化这些数据，可以删掉 `.gitignore` 里对应的块。
@@ -109,7 +109,7 @@
   不得自动写成 accepted memory。
 - 区分“计划、已执行、已验证”。
 - 写清尚未完成的部分、阻塞和下一步。
-- 运行 `jobflow.py validate`。
+- 运行 `python3 00-工作流系统/bin/jobflow.py validate`。
 - Git 只提交本任务相关文件，不夹带用户现有改动。
 
 ## 5. 冷启动成功标准
@@ -125,12 +125,12 @@
 
 回答不了时，不要回头读整段 session；先把缺失信息作为系统缺陷记录下来。
 
-外部 Slack/CLI 启动器应使用 `jobflow.py bootstrap-prompt` 生成首条指令，详见
+外部 Slack/CLI 启动器应使用 `python3 00-工作流系统/bin/jobflow.py bootstrap-prompt` 生成首条指令，详见
 `00-工作流系统/adapters/README.md`。
 
-动态本地控制台可双击根目录 `打开本地求职控制台.command`（或运行
-`00-工作流系统/local-control/start.sh`）：它在本机启动 Next.js UI 与 `jobflowd`，
-投递、Case、报告和只读 Agent runs 都可在网页中查看。`打开看板.command`
+动态本地控制台可双击根目录 `./打开本地求职控制台.command`（或运行
+`./00-工作流系统/local-control/start.sh`）：它在本机启动 Next.js UI 与 `jobflowd`，
+投递、Case、报告和只读 Agent runs 都可在网页中查看。`./打开看板.command`
 是零 Node 依赖的只读备用入口。定时任务定义在 `state/recurring_jobs.json`，
 外部触发器（Claude Code 桌面定时任务、Codex automation、cron）只负责调用
-`scheduled-bootstrap`，配置方法见 `adapters/`。
+`python3 00-工作流系统/bin/jobflow.py scheduled-bootstrap --job <id> --scheduled-for <ISO>`，配置方法见 `adapters/`。

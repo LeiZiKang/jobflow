@@ -83,7 +83,7 @@ final class ConsoleProcess {
 
 struct Progress {
     var verified = 0
-    var target = 0
+    var target: Int? = nil
     var pendingReviews = 0
     var awaitingUser = 0
 }
@@ -98,7 +98,7 @@ func loadProgress() -> Progress {
     // 与 `jobflow.py status` 同源：current.json 的 metrics。
     let metrics = json("current.json")?["metrics"] as? [String: Any]
     p.verified = metrics?["submitted_verified"] as? Int ?? 0
-    p.target = metrics?["diagnostic_sample_target"] as? Int ?? 0
+    p.target = metrics?["diagnostic_sample_target"] as? Int
     if let tasks = json("task_queue.json")?["tasks"] as? [[String: Any]] {
         for t in tasks {
             let status = t["status"] as? String
@@ -270,7 +270,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     func render() {
         guard let button = statusItem.button else { return }
-        let count = "\(progress.verified)/\(progress.target)"
+        let count = progress.target.map { "\(progress.verified)/\($0)" } ?? "\(progress.verified)"
         switch state {
         case .running, .external:
             button.title = " \(count)"
@@ -300,7 +300,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         menu.addItem(item("打开主窗口", #selector(showMainWindow), "n"))
         menu.addItem(.separator())
         menu.addItem(info("控制台：\(stateText)"))
-        menu.addItem(info("已验证投递 \(progress.verified) / \(progress.target)"))
+        let count = progress.target.map { "\(progress.verified) / \($0)" } ?? "\(progress.verified)"
+        menu.addItem(info("已验证投递 \(count)"))
         menu.addItem(info("待审核草稿 \(progress.pendingReviews) 个"))
         if progress.awaitingUser > 0 { menu.addItem(info("等你拍板 \(progress.awaitingUser) 项")) }
         menu.addItem(.separator())

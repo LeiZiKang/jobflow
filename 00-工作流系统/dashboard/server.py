@@ -228,16 +228,20 @@ def render_overview() -> bytes:
     metrics = current.get("metrics", {})
 
     submitted = [a for a in apps if a.get("status") in POST_SUBMISSION]
-    target = metrics.get("diagnostic_sample_target", 15) or 15
+    target = metrics.get("diagnostic_sample_target")
+    verified = metrics.get("submitted_verified", len(submitted))
     interviewing = [a for a in apps if a.get("status") in {"interviewing", "offer"}]
     today = date.today().isoformat()
     today_apps = [a for a in apps if str(a.get("submitted_at", "")) == today]
     awaiting = [c for c in cands if c.get("decision_state") == "awaiting_user"]
-    pct = min(100, round(len(submitted) / target * 100)) if target else 0
+    pct = min(100, round(verified / target * 100)) if target else 0
+    denominator = f'<span style="font-size:17px;color:var(--ink-faint)">/ {target}</span>' if target is not None else ""
+    goal_detail = (f'<div class="bar"><i style="width:{pct}%"></i></div><div class="n">还差 {max(0, target - verified)} 家达到数量目标</div>'
+                   if target is not None else "")
 
     cards = f"""<div class="cards">
-  <div class="card"><div class="k">已验证投递</div><div class="v">{len(submitted)} <span style="font-size:17px;color:var(--ink-faint)">/ {target}</span></div>
-    <div class="bar"><i style="width:{pct}%"></i></div><div class="n">还差 {max(0, target - len(submitted))} 家可做回复率诊断</div></div>
+  <div class="card"><div class="k">已验证投递</div><div class="v">{verified} {denominator}</div>
+    {goal_detail}</div>
   <div class="card"><div class="k">面试中</div><div class="v">{len(interviewing)}</div><div class="n">进入面试或 offer 阶段</div></div>
   <div class="card"><div class="k">今日投递</div><div class="v">{len(today_apps)}</div><div class="n">{esc(today)}</div></div>
   <div class="card"><div class="k">候选待决</div><div class="v">{len(awaiting)}</div><div class="n">等你划投递范围</div></div>

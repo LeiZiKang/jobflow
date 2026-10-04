@@ -5,12 +5,16 @@ import { shortDate } from "@/lib/format";
 import type { ConsoleData } from "@/lib/types";
 
 export function OverviewView({ data, onNavigate }: { data: ConsoleData; onNavigate: (page: "opportunities" | "applications" | "reports" | "agents" | "runs") => void }) {
+  const metrics = data.overview.metrics;
+  const target = metrics?.diagnostic_sample_target;
+  const verified = metrics?.submitted_verified ?? 0;
   const pending = data.opportunities.filter((j) => j.stage === "awaiting_user");
   const active = data.applications.filter(isOnTrace);
   const latest = data.opportunities.reduce((date, j) => j.found_at && j.found_at > date ? j.found_at : date, "");
   const newest = data.opportunities.filter((j) => j.found_at === latest);
   return <>
     <header className="simple-heading"><h1>求职概览</h1><p className="muted">先看新岗位和已有回复，需要决定的放在这里。</p></header>
+    <p>已验证投递 {verified}{target != null ? ` / ${target}` : ""}{target != null && metrics?.gap_to_target != null ? ` · 还差 ${metrics.gap_to_target}` : ""}</p>
     <div className="simple-stats"><button type="button" onClick={() => onNavigate("opportunities")}><strong>{newest.length}</strong><span>最近检索 · {shortDate(latest)}</span></button>
       <button type="button" onClick={() => onNavigate("applications")}><strong>{active.length}</strong><span>跟踪中</span></button>
       <button type="button" onClick={() => document.getElementById("decisions")?.scrollIntoView({ behavior: "smooth" })}><strong>{pending.length}</strong><span>待你决定</span></button></div>

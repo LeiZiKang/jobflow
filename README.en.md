@@ -38,7 +38,7 @@ You can also start manually:
 
 ```bash
 python3 00-工作流系统/bin/jobflow.py init
-python3 00-工作流系统/bin/jobflow.py doctor
+python3 00-工作流系统/bin/jobflow.py doctor --lang en
 ```
 
 `00-工作流系统` means workflow system and contains the engine. Doctor normally returns 1 after the first init: you still need customized goals, a resume, and confirmed channels.
@@ -48,7 +48,7 @@ python3 00-工作流系统/bin/jobflow.py doctor
 ```bash
 python3 00-工作流系统/bin/jobflow.py config search_channels.json
 python3 00-工作流系统/bin/jobflow.py config inbound_sources.json
-python3 00-工作流系统/bin/jobflow.py doctor --json
+python3 00-工作流系统/bin/jobflow.py doctor --lang en --json
 ./00-工作流系统/scripts/check-all.sh
 ```
 
@@ -77,7 +77,7 @@ Open `http://127.0.0.1:8788`. On macOS, you can also double-click `打开本地�
 For a read-only dashboard without Node: `./打开看板.command` (open dashboard).
 For the macOS menu bar app: `./00-工作流系统/menubar-app/build.sh`.
 
-The daily and scheduling runbooks below are currently in Chinese; your agent can help you follow them.
+Daily and scheduling runbooks, templates, and generated reports are currently mainly in Chinese. Your agent can translate and explain them. Doctor supports `--lang en` or `--lang zh`; without the flag it uses JOBFLOW_LANG, then LANG (zh-prefixed locales use Chinese; others use English).
 
 ## Daily workflow
 

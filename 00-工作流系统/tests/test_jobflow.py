@@ -1,5 +1,7 @@
 import importlib.util
 import json
+import io
+import contextlib
 import os
 import shutil
 import sys
@@ -20,6 +22,46 @@ import check_job_reports
 
 
 class JobflowOpenInitTests(unittest.TestCase):
+    def test_unset_count_target_and_confirmed_target_views(self):
+        repo, _ = self.make_workspace()
+        current = repo.load("current.json")
+        self.assertIsNone(current["metrics"]["diagnostic_sample_target"])
+        self.assertIsNone(current["metrics"]["gap_to_target"])
+        reference = "$JOBFLOW_PROFILE_DIR/goals.json（默认 ~/.config/jobflow/profile/goals.json）"
+        self.assertIn(reference, repo.render_brief())
+        self.assertIn(reference, repo.load("task_queue.json")["tasks"][0]["objective"])
+        self.assertIn("已验证投递：**0**", repo.render_brief())
+        self.assertTrue(all(ok for _, ok, _ in repo.cold_start_check()))
+        output = io.StringIO()
+        with patch.object(jobflow, "JobflowRepo", return_value=repo), contextlib.redirect_stdout(output):
+            self.assertEqual(jobflow.main(["status"]), 0)
+        self.assertIn("submitted_verified=0\n", output.getvalue())
+        self.assertNotIn("gap=", output.getvalue())
+        import render_dashboard
+        html = render_dashboard.render(repo.repo_root)
+        self.assertIn('<div class="v">0</div><div class="l">已验证投递</div>', html)
+        self.assertNotIn("/ None", html)
+        current["metrics"].update(diagnostic_sample_target=7, gap_to_target=7)
+        jobflow._atomic_write_json(repo.state_dir / "current.json", current)
+        repo.write_brief()
+        repo.write_views()
+        self.assertIn("已验证投递：**0 / 7**", repo.render_brief())
+        self.assertEqual(repo.validate().errors, [])
+        current["metrics"]["diagnostic_sample_target"] = None
+        jobflow._atomic_write_json(repo.state_dir / "current.json", current)
+        self.assertTrue(any("gap_to_target" in e for e in repo.validate().errors))
+
+    def test_demo_target_and_status_change_with_unset_target(self):
+        repo, _ = self.make_workspace(demo=True)
+        current = repo.load("current.json")
+        self.assertEqual(current["metrics"]["diagnostic_sample_target"], 15)
+        self.assertIn("已验证投递：**2 / 15**", repo.render_brief())
+        current["metrics"].update(diagnostic_sample_target=None, gap_to_target=None)
+        jobflow._atomic_write_json(repo.state_dir / "current.json", current)
+        app = next(a for a in repo.load("applications.json")["applications"] if a["status"] == "submitted_verified")
+        repo.set_application_status(app["application_id"], "closed", "test closure", "test", [], None, None, None, None)
+        self.assertIsNone(repo.load("current.json")["metrics"]["gap_to_target"])
+
     def make_workspace(self, *, demo=False):
         temporary = tempfile.TemporaryDirectory()
         self.addCleanup(temporary.cleanup)

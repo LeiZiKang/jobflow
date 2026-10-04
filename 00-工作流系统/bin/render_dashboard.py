@@ -10,6 +10,7 @@
 """
 import argparse
 import jobflow_catalog
+from jobflow_metrics import verified_progress
 import datetime as dt
 import html
 import json
@@ -269,7 +270,8 @@ def render(repo_root=None):
     on_trace = [a for a in apps if a.get("status") in ON_TRACE_STATUSES]
     live = len(on_trace)
     closed = sum(1 for a in apps if a.get("status") in CLOSED_STATUSES)
-    target = metrics.get("diagnostic_sample_target", 15)
+    target = metrics.get("diagnostic_sample_target")
+    verified_text = verified_progress({**metrics, "submitted_verified": verified})
     od = sum(1 for a in apps
              if a.get("follow_up_state") != "cancelled"
              and (overdue_days(a.get("follow_up_due"), today) or 0) > 0)
@@ -292,7 +294,7 @@ def render(repo_root=None):
 {jobflow_catalog.cards(root, lambda p: p, latest_only=True)}
 <p><a href="05-检索报告/岗位目录.html" target="_blank" rel="noopener noreferrer">查看全部检索岗位 ↗</a></p>
 <div class="kpis">
-  <div class="kpi"><div class="v">{verified} / {target}</div><div class="l">已验证投递 / 诊断样本目标</div></div>
+  <div class="kpi"><div class="v">{verified_text}</div><div class="l">{'已验证投递 / 数量目标' if target is not None else '已验证投递'}</div></div>
   <div class="kpi"><div class="v">{live}</div><div class="l">On trace（已投未关闭）</div></div>
   <div class="kpi"><div class="v">{closed}</div><div class="l">已关闭 / 被拒</div></div>
   <div class="kpi{' alarm' if od else ''}"><div class="v">{od}</div><div class="l">跟进逾期</div></div>

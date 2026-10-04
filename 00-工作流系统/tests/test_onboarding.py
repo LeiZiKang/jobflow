@@ -34,6 +34,7 @@ class OnboardingTests(unittest.TestCase):
             shutil.copytree(BIN.parent / name, self.system / name)
         env = patch.dict(os.environ, {"JOBFLOW_PROFILE_DIR": str(self.profile),
                                       "JOBFLOW_RUNTIME_DIR": str(self.base / "runtime"),
+                                      "JOBFLOW_LANG": "zh",
                                       "JOBFLOW_CONSOLE_DIR": str(self.root / "console")})
         env.start()
         self.addCleanup(env.stop)
@@ -105,6 +106,35 @@ class OnboardingTests(unittest.TestCase):
         self.goals["dimensions"]["salary"]["weight"] = 1
         self.write("goals.json", self.goals)
         self.assertEqual(self.checks()["goals"]["status"], "missing")
+
+    def test_language_precedence_and_english_json(self):
+        for explicit, configured, locale, expected in (
+            ("en", "zh", "zh_CN.UTF-8", "en"),
+            ("zh", "en", "en_US.UTF-8", "zh"),
+            (None, "en", "zh_CN.UTF-8", "en"),
+            (None, "zh", "C", "zh"),
+            (None, "", "zh_TW.UTF-8", "zh"),
+            (None, "", "en_US.UTF-8", "en"),
+            (None, "", "C", "en"),
+            (None, "", "", "en"),
+        ):
+            with self.subTest(explicit=explicit, configured=configured, locale=locale):
+                with patch.dict(os.environ, {"JOBFLOW_LANG": configured, "LANG": locale}):
+                    self.assertEqual(doctor.resolve_language(explicit), expected)
+                    args = ["doctor", "--json"] + (["--lang", explicit] if explicit else [])
+                    code, output = self.cli(args)
+                    self.assertEqual(code, 1)
+                    first = json.loads(output)["checks"][0]
+                    self.assertEqual(first["message"], "Ready" if expected == "en" else "已就绪")
+        code, output = self.cli(["doctor", "--lang", "en"])
+        self.assertEqual(code, 1)
+        self.assertIn("(required)", output)
+        self.assertIn("Not ready:", output)
+        self.assertIn("copy the template and edit it:", output)
+        self.ready()
+        code, output = self.cli(["doctor", "--lang", "en"])
+        self.assertEqual(code, 0)
+        self.assertIn("Ready: all required checks passed.", output)
 
     def test_undecided_preference_is_ready_only_after_customizing_goals(self):
         self.ready()
