@@ -2,7 +2,7 @@
 
 开始任何任务前，先读 `00-工作流系统/START_HERE.md`。
 
-如果 `00-工作流系统/state/current.json` 不存在，说明工作区还没初始化。先读 `00-工作流系统/runbooks/首次使用.md`，带用户完成初始化，再做其他事。
+先运行 `python3 00-工作流系统/bin/jobflow.py doctor`。如果 `00-工作流系统/state/current.json` 不存在，或 doctor 必需项不全（退出码 1），先读 `00-工作流系统/runbooks/首次使用.md`，分阶段带用户补齐准备。已有 state 时不重复 init。纯引擎开发使用临时 profile/runtime 验收，不要求开发者填写真实求职资料。
 
 ## 红线
 

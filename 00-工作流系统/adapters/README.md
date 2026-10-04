@@ -38,3 +38,12 @@ python3 00-工作流系统/bin/jobflow.py bootstrap-prompt \
 Slack 桥接不在本仓库内；接入任何 bot 前，先确认它满足上面五条。
 
 定时任务的配置见 `SCHEDULED_COMMON.md`、`CLAUDE_CODE_SCHEDULED.md`、`CODEX_SCHEDULED.md`。
+
+## 首次使用与个人配置
+
+先运行 `python3 00-工作流系统/bin/jobflow.py doctor`；必需项未齐时按
+[首次使用访谈](../runbooks/首次使用.md) 完成准备。
+所有后端与定时触发器须继承同一 `JOBFLOW_PROFILE_DIR` 和 `JOBFLOW_RUNTIME_DIR`。
+渠道设置先从 `config/search_channels.json`、`config/inbound_sources.json` 复制到个人目录后编辑，
+不要修改仓库模板。统一用 `jobflow.py config search_channels.json` /
+`jobflow.py config inbound_sources.json` 读取；个人覆盖优先，损坏时停止并修复，不回退。

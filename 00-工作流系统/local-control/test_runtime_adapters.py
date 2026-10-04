@@ -209,6 +209,16 @@ class RuntimeAdaptersTests(unittest.TestCase):
             environment,
         )
 
+    def test_sanitized_environment_keeps_personal_directory_overrides(self) -> None:
+        overrides = {
+            "JOBFLOW_PROFILE_DIR": str(self.repo / "profile"),
+            "JOBFLOW_RUNTIME_DIR": str(self.repo / "runtime"),
+        }
+        with mock.patch.dict(runtime_adapters.os.environ, overrides):
+            environment = runtime_adapters._sanitized_environment()
+        for key, value in overrides.items():
+            self.assertEqual(environment[key], value)
+
     @mock.patch.object(runtime_adapters.shutil, "which", return_value="/usr/bin/codex")
     def test_run_agent_streams_normalized_events_with_mock_process(self, _which) -> None:
         stdout = io.StringIO(

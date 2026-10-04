@@ -10,8 +10,10 @@
 
 ## 1. 固定启动顺序
 
-**先判断是不是第一次使用**：如果 `00-工作流系统/state/current.json` 不存在，说明这个副本还没初始化。
-不要往下走，改读 `00-工作流系统/runbooks/首次使用.md`，带用户完成初始化。
+**先判断是否准备完成**：运行 `python3 00-工作流系统/bin/jobflow.py doctor`。
+如果 `00-工作流系统/state/current.json` 不存在，或 doctor 必需项不全（退出码 1），
+先读 `00-工作流系统/runbooks/首次使用.md`，按阶段访谈并补齐。已有 state 时不要重复 init。
+纯引擎开发使用临时 profile/runtime 做验收，无需开发者填写真实资料。
 
 0. 想先看全貌：用浏览器打开 `00-工作流系统/系统架构.html`——分层、角色、派活方式、
    状态机、证据等级、审批门和当前实现进度都在里面。看完再按下面顺序走。
@@ -52,7 +54,7 @@
 
 | 东西 | 默认位置 | 覆盖用的环境变量 |
 |---|---|---|
-| 个人求职目标与身份资料 | `~/.config/jobflow/profile/` | `JOBFLOW_PROFILE_DIR` |
+| 个人目标、渠道配置、访谈与可选身份 | `~/.config/jobflow/profile/` | `JOBFLOW_PROFILE_DIR` |
 | jobflowd 运行产物（SQLite / token / pid） | `~/.local/state/jobflow` | `JOBFLOW_RUNTIME_DIR` |
 
 仓库内：
@@ -69,7 +71,7 @@
 
 需要时再读，不用一上来就读：
 
-- `runbooks/首次使用.md` —— `state/` 不存在时，按它带用户完成初始化
+- `runbooks/首次使用.md` —— state 不存在或 doctor 必需项未齐时，按它带用户完成准备
 - `adapters/CODEX_SETUP.md` —— 用 Codex 接管前看这份
 
 ## 2. 权威顺序

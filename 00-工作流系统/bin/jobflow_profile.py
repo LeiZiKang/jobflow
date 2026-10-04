@@ -55,3 +55,33 @@ def load_goals(*, repo_root: Path | None = None) -> dict:
 def load_identity(*, repo_root: Path | None = None) -> dict:
     """Explicit opt-in for a future application workflow; never called by scorer."""
     return _load_file("identity.json", repo_root=repo_root)
+
+
+CHANNEL_CONFIGS = ("search_channels.json", "inbound_sources.json")
+
+
+def resolve_channel_config(name: str, *, repo_root: Path | None = None) -> Path:
+    """Prefer an external override; reject unsafe links rather than falling back."""
+    if name not in CHANNEL_CONFIGS:
+        raise ProfileError("Unsupported channel configuration")
+    root = (repo_root or repository_root()).resolve()
+    directory = profile_directory(repo_root=root)
+    candidate = directory / name
+    if candidate.exists() or candidate.is_symlink():
+        resolved = _outside_repository(candidate, root)
+        if resolved.parent != directory:
+            raise ProfileError("Profile file must remain inside the profile directory")
+        return resolved
+    return root / "00-工作流系统" / "config" / name
+
+
+def load_channel_config(name: str, *, repo_root: Path | None = None) -> dict:
+    """Read the effective JSON object without silently ignoring a broken override."""
+    path = resolve_channel_config(name, repo_root=repo_root)
+    try:
+        result = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeError, ValueError):
+        raise ProfileError("Channel configuration is unreadable or invalid JSON") from None
+    if not isinstance(result, dict):
+        raise ProfileError("Channel configuration must contain a JSON object")
+    return result

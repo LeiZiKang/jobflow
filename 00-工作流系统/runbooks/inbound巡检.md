@@ -2,7 +2,12 @@
 
 author: codex · 2026-09-22
 
-任务 job-inbound-sweep 每天北京时间09:00在早间串行任务第一段执行。以 config/inbound_sources.json 为清单，覆盖BOSS、猎聘、LinkedIn、Indeed、51job可用消息入口、本机Mail全部已配置账户中的求职邮件、已连接Slack中的求职相关DM/提及。官网/ATS邮件由邮箱覆盖；已有申请门户若有独立收件箱另列。不能把能搜岗位当作能读私信。
+任务 job-inbound-sweep 每天北京时间09:00在早间串行任务第一段执行。以有效 inbound_sources 配置为清单，仅检查用户已确认且启用的来源。模板包含BOSS、猎聘、LinkedIn、Indeed、51job可用消息入口、本机Mail全部已配置账户中的求职邮件、已连接Slack中的求职相关DM/提及。官网/ATS邮件由邮箱覆盖；已有申请门户若有独立收件箱另列。不能把能搜岗位当作能读私信。
+
+用 `python3 00-工作流系统/bin/jobflow.py config inbound_sources.json` 读取有效配置。
+优先读取 `JOBFLOW_PROFILE_DIR/inbound_sources.json`，没有覆盖才回退到默认模板。
+需要调整时先复制 `config/inbound_sources.json` 到个人目录再编辑。模板不等于授权，
+岗位搜索授权也不包括邮箱、Slack 或平台收件箱；先确认来源与范围。
 
 ## 执行与窗口
 

@@ -3,7 +3,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$ROOT"
 
-PYCACHE="${JOBFLOW_PYCACHE:-/private/tmp/jobflow-pycache}"
+PYCACHE="${JOBFLOW_PYCACHE:-${PYTHONPYCACHEPREFIX:-/private/tmp/jobflow-pycache}}"
 export PYTHONPYCACHEPREFIX="$PYCACHE"
 
 if [ ! -f "00-工作流系统/state/current.json" ]; then
@@ -24,6 +24,7 @@ python3 -m unittest -q 00-工作流系统/tests/test_ontrace.py
 python3 -m unittest -q 00-工作流系统/tests/test_priority.py
 python3 -m unittest -q 00-工作流系统/tests/test_memory.py
 python3 -m unittest -q 00-工作流系统/tests/test_screening.py
+python3 -m unittest -q 00-工作流系统/tests/test_onboarding.py
 python3 -m unittest -q 00-工作流系统/tests/test_inbound_digest.py
 python3 -m unittest -q 00-工作流系统/tests/test_report_v2.py
 python3 -m unittest -q 00-工作流系统/tests/test_today.py

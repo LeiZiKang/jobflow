@@ -26,6 +26,7 @@ from jobflow_writes import mutation, read_snapshot
 import jobflow_progress
 import jobflow_catalog
 import jobflow_evidence
+from jobflow_profile import CHANNEL_CONFIGS, ProfileError, load_channel_config
 
 
 APPLICATION_STATES = {
@@ -2627,6 +2628,13 @@ class JobflowRepo:
         job = self.find_job(job_id)
         envelope = job.get("envelope", {})
         last_run = job.get("last_run")
+        # Resolve at execution time, so existing initialized workspaces also use
+        # profile overrides without embedding personal paths in canonical state.
+        inputs = [
+            f"运行 python3 00-工作流系统/bin/jobflow.py config {Path(item).name} 读取有效渠道配置"
+            if item in {f"00-工作流系统/config/{name}" for name in CHANNEL_CONFIGS} else item
+            for item in envelope.get("inputs", [])
+        ]
         lines = [
             "你是执行层 subagent，不是 Decider。严格按下面的任务信封工作，不得扩大范围。",
             "",
@@ -2639,7 +2647,7 @@ class JobflowRepo:
                     "task_id": f"{job.get('job_id')}-{date.today().isoformat()}",
                     "role": envelope.get("role"),
                     "objective": envelope.get("objective"),
-                    "inputs": envelope.get("inputs", []),
+                    "inputs": inputs,
                     "allowed_actions": envelope.get("allowed_actions", []),
                     "forbidden_actions": envelope.get("forbidden_actions", []),
                     "output_path": envelope.get("output_path"),
@@ -3651,6 +3659,10 @@ def build_parser() -> argparse.ArgumentParser:
     init = sub.add_parser("init", help="initialize an empty or demo jobflow workspace")
     init.add_argument("--demo", action="store_true", help="seed fictional demo companies, applications, and evidence")
     init.add_argument("--force", action="store_true", help="replace existing generated state")
+    doctor = sub.add_parser("doctor", help="check onboarding readiness without printing personal data")
+    doctor.add_argument("--json", action="store_true", help="print structured readiness checks")
+    config = sub.add_parser("config", help="read effective channel config (private override before template)")
+    config.add_argument("name", choices=CHANNEL_CONFIGS)
     sub.add_parser("validate", help="validate canonical state and generated brief")
     sub.add_parser("status", help="print current job-search status")
     sub.add_parser("next", help="print actionable or user-waiting tasks")
@@ -3804,6 +3816,16 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     repo = JobflowRepo()
+    if args.command == "doctor":
+        from jobflow_doctor import run_doctor
+        return run_doctor(repo.repo_root, as_json=args.json)
+    if args.command == "config":
+        try:
+            print(json.dumps(load_channel_config(args.name, repo_root=repo.repo_root), ensure_ascii=False, indent=2))
+            return 0
+        except ProfileError as exc:
+            print(str(exc), file=sys.stderr)
+            return 1
     if args.command == "init":
         try:
             written = repo.init_workspace(demo=args.demo, force=args.force)

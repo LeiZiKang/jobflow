@@ -1,0 +1,119 @@
+[中文](新手指南.md) | **English**
+
+# Getting started
+
+Prepare your goals, resume, and preferred job sites. Then let your agent guide you through setup. You do not need every answer in advance.
+
+## What to prepare
+
+| Item | Requirement |
+|---|---|
+| System | macOS or Linux, with Git installed |
+| Python | 3.9 or later; the engine uses only the standard library |
+| Agent | Claude Code, Codex, or another agent that can work in a local repository |
+| Node | 20.9 or later, only for the console |
+| Browser | ego lite is recommended, with the ego-browser skill enabled in your agent |
+| Job sites | Choose your channels and sign in yourself |
+| Resume | At least one PDF, Markdown, JSON, DOCX, or TXT file |
+| Optional material | Portfolio links, ongoing conversations or applications, identity details |
+
+Use the [ego lite website](https://lite.ego.app/) for installation. Its official installation script currently supports macOS only. The browser lets agents reuse your own signed-in sessions. After installing it, make sure your agent has the `ego-browser` skill and the `ego-browser` command is on PATH.
+
+You can set up jobflow without it. Your agent will be limited to public pages in a browser that is not signed in, so much of the content on recruiting platforms may be unavailable. On Linux, you can start with the CLI and public pages. The agent will not install system software or silently switch browsing methods.
+
+Possible channels include BOSS直聘 (BOSS Zhipin), 猎聘 (Liepin), LinkedIn, Indeed, 前程无忧 (51job), and company careers sites or applicant tracking systems (ATS). Sign in only to the sites you intend to use. Handle passwords and verification codes yourself; never give them to the agent. Checking job-related email or Slack messages requires separate agreement on scope.
+
+Place your resume in `03-简历/` (resumes); subfolders are supported. README files do not count. The agent reads the original facts and asks before adapting application materials. Do not add identity documents, passwords, or other secrets.
+
+## What the first conversation covers
+
+Open the repository in your agent and say “Help me set up jobflow.” It will ask 2–4 questions at a time, repeat your answers back, and wait for confirmation before writing files:
+
+1. Your system, agent, and missing tools. Would you like a demo or an empty workspace?
+2. Target roles and seniority. Which cities, remote arrangements, and commutes work for you?
+3. Preferred industries or employer types: foreign-owned, domestic, or either?
+4. Minimum and target pay, including currency and pay basis. When could you start?
+5. What matters most? Example weights are technical experience 30, working hours 25, growth 20, pay 15, and culture and leave 10. Add or remove factors; the total must be 100.
+6. Keep or change the example thresholds: a supported score of 75, evidence coverage of 80, and rejection when even the upper bound is below 50? Prefer verified foreign-owned employers within the same recommendation group? Scores are not hiring probabilities.
+7. Deal-breakers, such as client-site outsourcing, a one-person team, or sustained extreme overtime?
+8. Set up ego lite? Which platforms should be used, and which are already signed in?
+9. Which resumes, portfolio links, and existing opportunities should be included? Would you like to provide an optional identity.json?
+10. Use the console or scheduled tasks?
+
+Unanswered questions stay null or undecided in your personal `onboarding.json`. The current scoring contract requires explicit weights, thresholds, a foreign-employer preference flag, and at least one hard rule. If these are undecided, or you have no hard rules, the agent will explain that scoring is not ready. It must not invent answers to pass validation. Details such as your start date stay in the interview record rather than being forced into the scoring format.
+
+## Start manually and check readiness
+
+From the repository root:
+
+```bash
+python3 00-工作流系统/bin/jobflow.py init
+python3 00-工作流系统/bin/jobflow.py doctor
+```
+
+`00-工作流系统` is the workflow engine directory. The first init creates state and example goals. Doctor will normally exit with code 1: customized goals, a resume, and confirmed channels are still missing.
+
+Complete the interview with your agent, or edit your personal goals using the structure in `00-工作流系统/examples/screening/goals.example.json`. Formatting changes alone do not count: doctor compares the parsed JSON. Once you have chosen channels, copy the templates to your personal directory and edit the copies:
+
+```bash
+PROFILE_DIR="${JOBFLOW_PROFILE_DIR:-$HOME/.config/jobflow/profile}"
+mkdir -p "$PROFILE_DIR"
+# -i asks before replacing an existing file
+cp -i 00-工作流系统/config/search_channels.json "$PROFILE_DIR/search_channels.json"
+# Only if you want inbox checks and have agreed on their scope
+cp -i 00-工作流系统/config/inbound_sources.json "$PROFILE_DIR/inbound_sources.json"
+```
+
+Trim `required_daily` / `sources`. Update search terms, location, coverage requirements, and the company list. The default companies are fictional examples. Keep personal preferences out of the tracked config templates. Do not create the search_channels override until you have decided. An explicitly agreed empty list is valid if you only want to supply job listings manually.
+
+```bash
+python3 00-工作流系统/bin/jobflow_screening.py --validate-profile
+python3 00-工作流系统/bin/jobflow.py config search_channels.json
+python3 00-工作流系统/bin/jobflow.py doctor --json
+./00-工作流系统/scripts/check-all.sh
+```
+
+Doctor has **five required checks**: Python, initialized state, valid goals that differ from the example, a resume, and a personal channels override. All must be ok for exit code 0; otherwise it returns 1. Missing Node, console dependencies, ego-browser, or identity.json only produces warnings.
+
+Doctor prints no goals or identity content and does not sign in to websites. The config command does print your selected channel configuration; do not paste it into a public issue.
+
+**Ready** means the required doctor checks pass and check-all passes. This does not verify resume facts, platform logins, or channel availability. Start with one manual, read-only job search before scheduling recurring runs.
+
+## Where data lives
+
+| Content | Location |
+|---|---|
+| Goals, channels, interview notes, optional identity | `JOBFLOW_PROFILE_DIR`, default `~/.config/jobflow/profile/` |
+| Personal channel overrides | `search_channels.json` and `inbound_sources.json` in that directory |
+| Default channel templates | `00-工作流系统/config/`; used only when no personal override exists |
+| Resumes | `03-简历/` |
+| Progress, evidence, approvals | `00-工作流系统/state/`, `evidence/`, `approvals/`, etc. |
+| Job-search reports | `05-检索报告/` (search reports) |
+| Local service runtime data | `JOBFLOW_RUNTIME_DIR`, default `~/.local/state/jobflow` |
+
+The profile directory must be outside the repository. File symlinks must stay inside that directory. Broken overrides cause an error instead of falling back to a template. Directory permissions of 0700 and file permissions of 0600 are recommended. Migrate the profile separately when moving machines, and give scheduled triggers the same environment variables.
+
+User data inside the repository is ignored by Git by default. If you want to version it, change the ignore rules only in a private repository. Never commit it to a public repository.
+
+## Common questions
+
+**Can I try a demo first?**
+Run `python3 00-工作流系统/bin/jobflow.py init --demo`. Use `init --force` to reset afterward. Existing core state is backed up to `00-工作流系统/.init-backup-*`. Business files listed in the demo manifest are removed, so do not put real information into demo files. Personal configuration is preserved.
+
+**Why does doctor say my goals are unchanged after init?**
+Init copies a fictional example. Customize its content and pass profile validation. Whitespace, indentation, and key order do not count as changes.
+
+**Can I start without identity details?**
+Yes. identity.json is only needed when preparing application materials. It is not required for search or readiness.
+
+**Can I start without Node or console dependencies?**
+Yes, use the CLI. When you want the console, install Node 20.9+, run `cd console && npm install`, return to the repository root, and run `./00-工作流系统/local-control/start.sh`. Open `http://127.0.0.1:8788`. Use the launcher instead of `npm run dev` so the local service is connected.
+
+**ego-browser passes, but a platform still asks me to sign in.**
+The check only confirms that the command exists. Skill availability and active logins must be checked in the current session. You handle sign-in yourself.
+
+**What if check-all fails?**
+Confirm that init has completed, then inspect the first error. Share a version of the error without personal data with your agent. Do not fabricate data to pass. Without console dependencies, the TypeScript check is skipped with a warning; install them for full console validation.
+
+**How do I schedule runs?**
+Start with a successful manual run. Then read the [scheduling contract](../00-工作流系统/adapters/SCHEDULED_COMMON.md) and the instructions for [Claude Code](../00-工作流系统/adapters/CLAUDE_CODE_SCHEDULED.md) or [Codex](../00-工作流系统/adapters/CODEX_SCHEDULED.md). External actions still require separate approval.
