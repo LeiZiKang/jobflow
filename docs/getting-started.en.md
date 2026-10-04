@@ -163,3 +163,5 @@ Confirm that init has completed, then inspect the first error. Share a version o
 **How do I schedule runs?**
 The scheduling documents below are currently in Chinese; your agent can help you follow them.
 Start with a successful manual run. Then read the [scheduling contract](../00-工作流系统/adapters/SCHEDULED_COMMON.md) and the instructions for [Claude Code](../00-工作流系统/adapters/CLAUDE_CODE_SCHEDULED.md) or [Codex](../00-工作流系统/adapters/CODEX_SCHEDULED.md). External actions still require separate approval.
+
+Updates: ask your Agent to update jobflow, or run `python3 00-工作流系统/bin/jobflow.py update`. See [updates](../README.en.md#updates) for notifications, privacy and ZIP migration.

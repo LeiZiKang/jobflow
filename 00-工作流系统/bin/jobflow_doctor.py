@@ -99,6 +99,11 @@ def check_readiness(repo_root: Path, *, lang: str | None = None) -> dict:
         tr('确认渠道后复制并编辑：', 'After confirming your channels, copy the template and edit it: ') + profile_copy_command(
             "00-工作流系统/config/search_channels.json", "search_channels.json"))
 
+    from jobflow_update import cached_status, describe
+    update = cached_status(root)
+    add("update", False, update["status"] in ("ok", "disabled") and not update["update_available"],
+        describe(update), describe(update))
+
     node = resolve_node()
     add("node", False, node is not None, tr('控制台需要 Node 20.9 或更新版本；不用控制台可跳过。', 'The console needs Node 20.9 or later. Skip this if you do not need the console.'), install="node", missing=True)
     add("console_dependencies", False, console_dependencies_ready(console_directory(root)) and node is not None and resolve_npm(node) is not None,

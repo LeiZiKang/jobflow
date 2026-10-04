@@ -18,6 +18,25 @@ SPEC.loader.exec_module(jobflowd)
 
 
 class JobflowdTests(unittest.TestCase):
+    def test_update_status_uses_controller_cache_without_network(self):
+        controller = self.make_controller()
+        (controller.repo_root / "VERSION").write_text("1.1.0")
+        cache = controller.update_runtime / "update-check.json"
+        cache.write_text(json.dumps(dict(status="ok", repository="LeiZiKang/jobflow",
+            current_version="1.0.0", latest_version="1.2.0", update_available=True,
+            release_url="https://github.com/LeiZiKang/jobflow/releases/tag/v1.2.0",
+            notes=["Fixture"], checked_at=time.time())))
+        import jobflow_update
+        with patch.dict(os.environ, {"JOBFLOW_UPDATE_CHECK": "1", "JOBFLOW_UPDATE_REPO": "LeiZiKang/jobflow",
+                                    "JOBFLOW_PROFILE_DIR": str(controller.update_runtime / "profile"),
+                                    "JOBFLOW_RUNTIME_DIR": str(controller.update_runtime / "different-runtime")}), \
+             patch.object(jobflow_update, "urlopen", side_effect=AssertionError("Network forbidden")):
+            value = controller.update_status()
+            self.assertTrue(value["update_available"])
+            self.assertEqual(value["current_version"], "1.1.0")
+            cache.write_text("broken")
+            self.assertEqual(controller.update_status()["status"], "unchecked")
+
     def test_today_and_evidence_view_are_scoped_and_escaped(self):
         controller = self.make_controller()
         app = {"application_id": "app-test", "company": "<script>bad</script>", "role": "iOS", "status": "application_prepared", "evidence_refs": []}

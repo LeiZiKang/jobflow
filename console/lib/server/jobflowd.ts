@@ -9,7 +9,7 @@ import http from "node:http";
 export const CONTROL_URL = process.env.JOBFLOWD_URL ?? "http://127.0.0.1:8791";
 
 /** 允许浏览器读的 jobflowd 端点。不在这张表里的一律 404。 */
-export const READABLE = ["overview", "applications", "materials", "today", "reports", "agents", "memory", "runs"] as const;
+export const READABLE = ["update", "overview", "applications", "materials", "today", "reports", "agents", "memory", "runs"] as const;
 export type Readable = (typeof READABLE)[number];
 
 export function isReadable(value: string): value is Readable {

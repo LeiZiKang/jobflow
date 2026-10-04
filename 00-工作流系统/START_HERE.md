@@ -1,5 +1,10 @@
 # START HERE — 新 Agent 接管入口
 
+开工时运行一次 `python3 00-工作流系统/bin/jobflow.py update --check`（24 小时缓存）。
+有新版本时，在开工复述末尾告知版本号和发布要点，询问是否更新；紧急事务先处理，不打断。
+只有用户在对话里明确同意更新后，才运行 `python3 00-工作流系统/bin/jobflow.py update --yes`。
+检查失败不阻塞其他工作；`JOBFLOW_UPDATE_CHECK=0` 可关闭联网检查。
+
 这份文件是 Claude、Codex 或其他 Agent 的统一入口。目标不是恢复上一段对话，
 而是从仓库恢复求职工作的目标、规则、状态和下一步。
 

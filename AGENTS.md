@@ -1,5 +1,10 @@
 # Agent 入口
 
+开工时运行一次 `python3 00-工作流系统/bin/jobflow.py update --check`（24 小时缓存）。
+有新版本时，在开工复述末尾告知版本号和发布要点，询问是否更新；紧急事务先处理，不打断。
+只有用户在对话里明确同意更新后，才运行 `python3 00-工作流系统/bin/jobflow.py update --yes`。
+检查失败不阻塞其他工作；`JOBFLOW_UPDATE_CHECK=0` 可关闭联网检查。
+
 开始任何任务前，先读 `00-工作流系统/START_HERE.md`。
 
 先运行 `python3 00-工作流系统/bin/jobflow.py doctor`。如果 `00-工作流系统/state/current.json` 不存在，或 doctor 必需项不全（退出码 1），先读 `00-工作流系统/runbooks/首次使用.md`，分阶段带用户补齐准备。已有 state 时不重复 init。纯引擎开发使用临时 profile/runtime 验收，不要求开发者填写真实求职资料。

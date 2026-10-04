@@ -17,6 +17,14 @@ On a new Mac without git / python3, it first obtains consent to trigger `xcode-s
 You handle administrator passwords, system dialogs, and platform sign-ins yourself. No shell configuration, proxy, network, or system settings are changed.
 
 
+## What it looks like
+
+The local console (screenshots use the fictional data from `init --demo`; the UI is in Chinese):
+
+| Today | Found jobs | Tracking |
+|---|---|---|
+| ![Today](docs/images/console-today.png) | ![Found jobs](docs/images/console-opportunities.png) | ![Tracking](docs/images/console-tracking.png) |
+
 ## How it works
 
 - The repository holds state, tasks, evidence, and reports. Personal goals and channel settings live outside it.
@@ -160,3 +168,40 @@ See the [getting-started guide](docs/getting-started.en.md) for more detail.
 ## License
 
 MIT. See [LICENSE](LICENSE).
+
+## Updates
+
+At startup your Agent checks for releases and asks before updating. The console banner and menu bar
+read the same cached status without network requests; click to view release notes. You can also
+subscribe on GitHub with Watch → Custom → Releases.
+
+Ask your Agent to “update jobflow for me”, or run:
+
+```bash
+python3 00-工作流系统/bin/jobflow.py --version
+python3 00-工作流系统/bin/jobflow.py update --check
+python3 00-工作流系统/bin/jobflow.py update
+```
+
+Updating requires a git repository with origin, main checked out, and no local engine changes.
+After showing the version and notes, it asks `[y/N]`, fetches tags, fast-forwards, backs up and migrates
+data, then runs doctor and check-all. Diverged history stops the update. Stash local changes first
+(`git stash -u` includes untracked files), or ask your Agent for help. Agents may use `--yes` only
+with your explicit consent in the conversation. A changed console lockfile prompts you to run
+`npm ci` in console/; dependencies are not installed automatically.
+Stop the console and other writers before updating; the migration lock coordinates cooperating writers only.
+
+On failure, the output states the current version and data status. To roll back, run
+`git checkout v<old-version>` and restore state, events, evidence, approvals and DECIDER_BRIEF.md
+from the reported `00-工作流系统/.migrate-backup-*/` directory, preserving current data first.
+Checkout leaves a detached HEAD; return to main before another update. Migration never changes your external profile.
+
+Update checks contact the GitHub API: GitHub sees your IP address, but no personal data or token is
+sent. Proxy settings stay unchanged. Results, including failures, are cached for 24 hours.
+Use `update --check --force` to bypass the cache, or `JOBFLOW_UPDATE_CHECK=0` to disable network checks.
+Fork owners can set `JOBFLOW_UPDATE_REPO=owner/repo`.
+
+ZIP users: download a new copy, copy state, events, evidence, approvals and DECIDER_BRIEF.md inside
+00-工作流系统/, your 01–05 data directories and assets, and your external profile (reuse its existing
+location if unchanged). Run `jobflow.py migrate --dry-run`, then `jobflow.py migrate`, `jobflow.py doctor`
+and `./00-工作流系统/scripts/check-all.sh`. Alternatively git clone a fresh copy and transfer the same data.

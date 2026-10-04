@@ -13,6 +13,7 @@ import { OverviewView } from "./views/overview";
 import { OpportunitiesView } from "./views/opportunities";
 import { ReportsView } from "./views/reports";
 import { RunsView } from "./views/runs";
+import { UpdateBanner } from "./update-banner";
 import { ThemeToggle } from "./theme-toggle";
 import { TodayView } from "./views/today";
 
@@ -123,6 +124,7 @@ export function Console() {
       </nav>
 
       <main className="main">
+        <UpdateBanner refreshAt={stamp} />
         <header className="topbar">
           <span className="topbar__title">{NAV.find((item) => item.id === page)?.label}</span>
           <span className="topbar__phase">本地求职工作台 · 对外动作需本人确认</span>

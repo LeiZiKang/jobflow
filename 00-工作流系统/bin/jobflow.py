@@ -232,6 +232,8 @@ class JobflowRepo:
             directory.mkdir(parents=True, exist_ok=True)
 
         state_docs, extra_files = self._demo_seed(now, today) if demo else self._empty_seed(now, today)
+        from jobflow_update import version
+        state_docs["current.json"]["workspace_version"] = version(self.repo_root)
         for name, document in state_docs.items():
             path = self.state_dir / name
             _atomic_write_json(path, document)
@@ -3659,7 +3661,16 @@ def _task_is_available(task: dict[str, Any], statuses: dict[str, str]) -> bool:
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Job-search repo control-plane helper")
+    from jobflow_update import version
+    parser.add_argument("--version", action="version", version=version(Path(__file__).resolve().parents[2]))
     sub = parser.add_subparsers(dest="command", required=True)
+    update = sub.add_parser("update", help="check releases or update after user consent")
+    update.add_argument("--check", action="store_true")
+    update.add_argument("--json", action="store_true")
+    update.add_argument("--force", action="store_true", help="ignore check cache")
+    update.add_argument("--yes", action="store_true", help="only after explicit user consent")
+    migrate = sub.add_parser("migrate", help="back up and migrate workspace data")
+    migrate.add_argument("--dry-run", action="store_true")
     init = sub.add_parser("init", help="initialize an empty or demo jobflow workspace")
     init.add_argument("--demo", action="store_true", help="seed fictional demo companies, applications, and evidence")
     init.add_argument("--force", action="store_true", help="replace existing generated state")
@@ -3821,6 +3832,24 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     repo = JobflowRepo()
+    if args.command == "update":
+        from jobflow_update import check, describe, perform_update
+        if args.check:
+            result = check(repo.repo_root, force=args.force)
+            print(json.dumps(result, ensure_ascii=False) if args.json else describe(result))
+            return 0
+        if args.json or args.force:
+            print("--json / --force require --check", file=sys.stderr)
+            return 2
+        return perform_update(repo.repo_root, yes=args.yes)
+    if args.command == "migrate":
+        from jobflow_migrations import migrate
+        try:
+            print(json.dumps(migrate(repo, dry_run=args.dry_run), ensure_ascii=False, indent=2))
+            return 0
+        except (ValueError, OSError) as exc:
+            print(str(exc), file=sys.stderr)
+            return 1
     if args.command == "doctor":
         from jobflow_doctor import run_doctor
         return run_doctor(repo.repo_root, as_json=args.json, lang=args.lang)

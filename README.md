@@ -18,6 +18,14 @@
 管理员密码、系统弹窗和平台登录都由你本人处理；不会修改 shell 配置、代理、网络或系统设置。
 
 
+## 看起来是什么样
+
+本地控制台（截图用的是 `init --demo` 的虚构数据）：
+
+| 今天 | 检索到的岗位 | 跟踪中 |
+|---|---|---|
+| ![今天](docs/images/console-today.png) | ![检索岗位](docs/images/console-opportunities.png) | ![跟踪中](docs/images/console-tracking.png) |
+
 ## 核心设计
 
 - 仓库保存状态、任务、证据和报告；个人目标与渠道配置放在仓库外。
@@ -168,3 +176,36 @@ Agent 可整理材料、校验和生成本地报告。对外动作必须先批�
 ## 许可证
 
 MIT，见 [LICENSE](LICENSE)。
+
+## 更新
+
+Agent 开工时会检查更新，有新版会先告诉你版本号和要点。控制台顶部横幅和菜单栏的
+“有新版本”菜单读取同一份缓存，不主动联网；点击可看 Release。也可在 GitHub 点
+Watch → Custom → Releases 订阅发布通知。
+
+对 Agent 说“帮我更新 jobflow”，或自己运行：
+
+```bash
+python3 00-工作流系统/bin/jobflow.py --version
+python3 00-工作流系统/bin/jobflow.py update --check
+python3 00-工作流系统/bin/jobflow.py update
+```
+
+更新命令要求 git 仓库、有 origin、处于 main 且引擎无本地改动。它先显示新版和发布说明，
+确认 `[y/N]` 后 fetch tags、快进合并、备份迁移数据，再运行 doctor 和完整检查。
+无法快进会停止；有本地改动可先 `git stash`（未跟踪文件加 `-u`）或交给 Agent 处理。
+`--yes` 仅供 Agent 在用户已于对话中明确同意更新后使用。lockfile 变化时会提示在 console/
+重新 `npm ci`，不自动安装依赖。失败时请看输出的当前版本、数据状态与备份位置。
+回退代码可用 `git checkout v<旧版本>`，然后将本次 `00-工作流系统/.migrate-backup-*/`
+内的 state、events、evidence、approvals 和 DECIDER_BRIEF.md 恢复到系统目录（先保留现有数据）；
+回退后是 detached HEAD，下次更新需先回 main。迁移不覆盖仓库外的 profile。
+更新期间先停止控制台及其他写入任务；迁移锁只协调遵守写入协议的进程。
+
+检查会访问 GitHub API，GitHub 能看到你的 IP；不发送个人数据或 token，不更改代理。
+结果（含失败）缓存 24 小时，`update --check --force` 可忽略缓存，
+`JOBFLOW_UPDATE_CHECK=0` 完全关闭联网检查。fork 可设 `JOBFLOW_UPDATE_REPO=所有者/仓库`。
+
+ZIP 用户：下载新版到新目录，把旧版 `00-工作流系统/` 下的 state、events、evidence、approvals、
+DECIDER_BRIEF.md，以及 01–05 用户数据目录、assets 和仓库外 profile 拷过去（profile 原位置不变可直接复用）。
+然后运行 `python3 00-工作流系统/bin/jobflow.py migrate --dry-run` 查看步骤，再运行 `migrate`、
+`doctor` 和 `./00-工作流系统/scripts/check-all.sh`。也可改用 git clone 后按同样方法迁入数据。

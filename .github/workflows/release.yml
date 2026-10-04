@@ -18,6 +18,11 @@ jobs:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
+      - name: Verify release tag matches VERSION
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: test "$RELEASE_TAG" = "v$(cat VERSION)"
       - name: Build universal DMG
         run: ./00-工作流系统/menubar-app/build.sh --dmg "$RUNNER_TEMP/Jobflow.dmg"
       - name: Create release if needed and upload

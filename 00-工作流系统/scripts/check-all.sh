@@ -18,6 +18,7 @@ python3 00-工作流系统/bin/jobflow.py render-views
 python3 00-工作流系统/bin/jobflow.py golden-check
 python3 00-工作流系统/bin/jobflow.py evidence-verify
 python3 -m unittest -q 00-工作流系统/tests/test_jobflow.py
+python3 -m unittest -q 00-工作流系统/tests/test_update.py
 python3 -m unittest -q 00-工作流系统/tests/test_engine_diff.py
 python3 -m unittest -q 00-工作流系统/tests/test_progress.py
 python3 -m unittest -q 00-工作流系统/tests/test_catalog.py

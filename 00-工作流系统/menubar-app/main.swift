@@ -21,7 +21,7 @@ func validRepository(_ path: String) -> Bool {
 var repoDir = [env["JOBFLOW_REPO"], UserDefaults.standard.string(forKey: "JobflowRepo"),
                Bundle.main.object(forInfoDictionaryKey: "JobflowRepo") as? String]
     .compactMap { $0 }.first(where: validRepository) ?? ""
-let runtimeDir = env["JOBFLOW_RUNTIME_DIR"] ?? "\(home)/.local/state/jobflow"
+let runtimeDir = NSString(string: env["JOBFLOW_RUNTIME_DIR"] ?? "\(env["XDG_STATE_HOME"] ?? "\(home)/.local/state")/jobflow").expandingTildeInPath
 let webPort = env["JOBFLOW_WEB_PORT"] ?? "8788"
 let webURL = URL(string: "http://127.0.0.1:\(webPort)/")!
 var startScript: String { "\(repoDir)/00-工作流系统/local-control/start.sh" }
@@ -126,6 +126,37 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     var progress = Progress()
     var wantRunning = true
     var timer: Timer?
+    var updateTimer: Timer?
+    var updateVersion: String?
+    var updateURL: URL?
+
+    func loadUpdateCache() {
+        updateVersion = nil
+        updateURL = nil
+        guard env["JOBFLOW_UPDATE_CHECK"] != "0",
+              let data = FileManager.default.contents(atPath: "\(runtimeDir)/update-check.json"),
+              let value = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any],
+              value["status"] as? String == "ok",
+              value["repository"] as? String == (env["JOBFLOW_UPDATE_REPO"] ?? "LeiZiKang/jobflow"),
+              value["update_available"] as? Bool == true,
+              let checked = value["checked_at"] as? Double,
+              Date().timeIntervalSince1970 - checked >= 0,
+              Date().timeIntervalSince1970 - checked < 24 * 60 * 60,
+              let latest = value["latest_version"] as? String,
+              let current = try? String(contentsOfFile: "\(repoDir)/VERSION", encoding: .utf8),
+              current.trimmingCharacters(in: .whitespacesAndNewlines) == value["current_version"] as? String,
+              latest.range(of: #"^\d+\.\d+\.\d+$"#, options: .regularExpression) != nil,
+              let link = value["release_url"] as? String,
+              link == "https://github.com/\(env["JOBFLOW_UPDATE_REPO"] ?? "LeiZiKang/jobflow")/releases/tag/v\(latest)",
+              let url = URL(string: link) else { return }
+        updateVersion = latest
+        updateURL = url
+    }
+
+    @objc func openUpdateRelease() {
+        if let url = updateURL { NSWorkspace.shared.open(url) }
+    }
+
     var mainWindow: MainWindowController?
     var launchedAsLoginItem = false
 
@@ -157,6 +188,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         progress = loadProgress()
         if validRepository(repoDir) { startService() }
         timer = Timer.scheduledTimer(withTimeInterval: 5, repeats: true) { [weak self] _ in self?.poll() }
+        loadUpdateCache()
+        updateTimer = Timer.scheduledTimer(withTimeInterval: 24 * 60 * 60, repeats: true) { [weak self] _ in self?.loadUpdateCache() }
         poll()
         NSApp.mainMenu = buildMainMenu()
         if !launchedAsLoginItem { showMainWindow() }
@@ -312,7 +345,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     func menuNeedsUpdate(_ menu: NSMenu) {
+        loadUpdateCache()
         menu.removeAllItems()
+        if let latest = updateVersion {
+            menu.addItem(item("有新版本 v\(latest)…", #selector(openUpdateRelease)))
+            menu.addItem(.separator())
+        }
         menu.addItem(item("打开主窗口", #selector(showMainWindow), "n"))
         menu.addItem(.separator())
         menu.addItem(info("控制台：\(stateText)"))

@@ -39,7 +39,11 @@ scan "个人绝对路径" "${mac_home}"'/[A-Za-z0-9_.-]+|/home/[A-Za-z0-9_.-]+/'
 scan "疑似密钥或 token" '(gh[pousr]_[A-Za-z0-9]{20,}|\bsk-(ant-|proj-)?[A-Za-z0-9_]{20,}|AKIA[0-9A-Z]{16}|-----BEGIN [A-Z ]*PRIVATE KEY-----|xox[abpr]-[A-Za-z0-9-]{10,})'
 
 # 5. 二进制文档与截图（图标等资源应在构建时生成，不提交）
-bins=$(printf '%s\n' "${FILES[@]}" | grep -iE '\.(pdf|png|jpe?g|heic|docx?|xlsx?|sqlite|db)$' || true)
+# 唯一例外：docs/images/ 下的 PNG（README 截图，只能用 init --demo 的虚构数据截取），单张不超过 1 MB
+bins=$(printf '%s\n' "${FILES[@]}" | grep -iE '\.(pdf|png|jpe?g|heic|docx?|xlsx?|sqlite|db)$' | grep -vE '^docs/images/[A-Za-z0-9._-]+\.png$' || true)
+for img in $(printf '%s\n' "${FILES[@]}" | grep -E '^docs/images/[A-Za-z0-9._-]+\.png$' || true); do
+  [ "$(wc -c < "$img")" -le 1048576 ] || report "截图超过 1 MB：$img"
+done
 [ -z "$bins" ] || { report "出现二进制文档/图片"; echo "$bins"; }
 
 # 6. 用户数据目录不应被发布

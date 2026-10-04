@@ -55,8 +55,13 @@ DOCUMENT_ROOTS = {"02-策略", "03-简历", "04-面试", "05-检索报告", "06-
 
 
 class LocalController:
+    def update_status(self) -> dict:
+        from jobflow_update import cached_status
+        return cached_status(self.repo_root, self.update_runtime)
+
     def __init__(self, repo_root: Path, db_path: Path, max_workers: int = 6) -> None:
         self.repo_root = repo_root.resolve()
+        self.update_runtime = db_path.parent
         self.store = RuntimeStore(db_path)
         self.memory_store = MemoryStore(self.repo_root / "00-工作流系统")
         self.pool = ThreadPoolExecutor(max_workers=max_workers, thread_name_prefix="jobflow-run")
@@ -637,6 +642,8 @@ class ControlHandler(BaseHTTPRequestHandler):
                         "read_only_agent_runs": True,
                     }
                 )
+            if parsed.path == "/update":
+                return self._send(self.controller.update_status())
             if parsed.path == "/agents":
                 return self._send({"agents": self.controller.agents()})
             if parsed.path == "/overview":

@@ -301,3 +301,14 @@ export type ConsoleData = {
 };
 
 export type ResourceErrors = Partial<Record<ResourceKey, string>>;
+
+export interface UpdateStatus {
+  status: "ok" | "failed" | "disabled" | "unchecked";
+  current_version: string;
+  latest_version: string | null;
+  update_available: boolean;
+  release_url: string | null;
+  notes: string[];
+  checked_at: number | null;
+  stale: boolean;
+}
