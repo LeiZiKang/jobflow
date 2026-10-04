@@ -2,6 +2,7 @@
 import json
 import os
 from pathlib import Path
+import shlex
 import subprocess
 import tempfile
 import unittest
@@ -71,7 +72,8 @@ class BuildTests(unittest.TestCase):
         self.calls = self.root / "calls.jsonl"
         self.output = self.root / "output with spaces" / "Jobflow.dmg"
         self.env = {k: v for k, v in os.environ.items()
-                    if k not in ("JOBFLOW_SIGN_IDENTITY", "JOBFLOW_NOTARY_PROFILE")}
+                    if k not in ("JOBFLOW_SIGN_IDENTITY", "JOBFLOW_NOTARY_PROFILE",
+                                 "JOBFLOW_NOTARY_KEYCHAIN")}
         self.env.update(PATH=f"{self.bin}:/usr/bin:/bin:/usr/sbin:/sbin",
                         TMPDIR=str(self.root), CALLS=str(self.calls))
 
@@ -125,10 +127,37 @@ class BuildTests(unittest.TestCase):
         for c in submits:
             self.assertIn("--wait", c)
             self.assertEqual(c[c.index("--keychain-profile") + 1], "<PROFILE WITH SPACES>")
+            self.assertNotIn("--keychain", c)
         validations = [c for c in calls if c[:3] == ["xcrun", "stapler", "validate"]]
         self.assertEqual([Path(c[-1]).suffix for c in validations], [".app", ".dmg"])
         self.assertEqual(len([c for c in calls if c[0] == "spctl"]), 2)
         self.assertTrue(self.output.exists())
+
+    def test_custom_keychain_is_used_for_both_submissions(self):
+        keychain = str(self.root / "keychain with spaces.keychain-db")
+        result = self.signed(JOBFLOW_NOTARY_KEYCHAIN=keychain)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        submits = [c for c in self.read_calls()
+                   if c[:3] == ["xcrun", "notarytool", "submit"]]
+        self.assertEqual(len(submits), 2)
+        for c in submits:
+            self.assertEqual(c.count("--keychain"), 1)
+            self.assertEqual(c[c.index("--keychain") + 1], keychain)
+
+    def test_custom_keychain_recovery_commands_are_shell_safe(self):
+        keychain = str(self.root / "keychain with spaces.keychain-db")
+        result = self.signed(JOBFLOW_NOTARY_KEYCHAIN=keychain, APP_STATUS="TransportError")
+        self.assertNotEqual(result.returncode, 0)
+        commands = [shlex.split(line.strip()) for line in result.stderr.splitlines()
+                    if line.strip().startswith("xcrun notarytool")]
+        self.assertEqual([c[2] for c in commands], ["history", "log"])
+        for c in commands:
+            self.assertEqual(c[c.index("--keychain") + 1], keychain)
+
+    def test_custom_keychain_alone_does_not_enable_notarization(self):
+        result = self.run_build(JOBFLOW_NOTARY_KEYCHAIN="unused.keychain-db")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertFalse(any(c[0] in ("xcrun", "spctl") for c in self.read_calls()))
 
     def test_missing_configuration_fails_before_tools(self):
         result = self.run_build(True)

@@ -2,6 +2,7 @@
 # 编译菜单栏 App 并安装到 ~/Applications/求职控制台.app。
 # --dmg PATH 构建可分发的 universal DMG，不安装或退出本机 App。
 # JOBFLOW_SIGN_IDENTITY 可选 Developer ID；--notarize 使用 JOBFLOW_NOTARY_PROFILE。
+# JOBFLOW_NOTARY_KEYCHAIN 可选，指定该 profile 所在的非默认钥匙串。
 # 构建中间产物放 $TMPDIR，不进工作树。
 set +x # 不回显调用参数；脚本不读取、接收或输出任何凭据内容。
 set -euo pipefail
@@ -13,6 +14,7 @@ DMG=""
 NOTARIZE=0
 SIGN_IDENTITY="${JOBFLOW_SIGN_IDENTITY:-}"
 NOTARY_PROFILE="${JOBFLOW_NOTARY_PROFILE:-}"
+NOTARY_KEYCHAIN="${JOBFLOW_NOTARY_KEYCHAIN:-}"
 die() { echo "错误：$*" >&2; exit 1; }
 usage() { echo "用法：build.sh [--dmg <输出路径> [--notarize]]" >&2; exit 2; }
 while [ "$#" -gt 0 ]; do
@@ -46,8 +48,12 @@ trap 'rm -rf "$(dirname "$BUILD")"' EXIT
 # 不展示服务原始响应或自动下载日志，避免输出账户信息。
 notarize() {
   local artifact="$1" result="$WORK/notary-result.json" rc=0 status submission
+  local -a notary_args=(--keychain-profile "$NOTARY_PROFILE")
+  if [ -n "$NOTARY_KEYCHAIN" ]; then
+    notary_args+=(--keychain "$NOTARY_KEYCHAIN")
+  fi
   echo "提交公证：$(basename "$artifact")"
-  xcrun notarytool submit "$artifact" --keychain-profile "$NOTARY_PROFILE" --wait \
+  xcrun notarytool submit "$artifact" "${notary_args[@]}" --wait \
     --output-format json >"$result" 2>/dev/null || rc=$?
   status=$(plutil -extract status raw -o - "$result" 2>/dev/null) || status=""
   submission=$(plutil -extract id raw -o - "$result" 2>/dev/null) || submission=""
@@ -56,9 +62,13 @@ notarize() {
     if [[ ! "$submission" =~ ^[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}$ ]]; then
       submission="<SUBMISSION_ID>"
       echo "未取得提交 ID；可先查询历史（如提交未创建，则不会有日志）：" >&2
-      printf '  xcrun notarytool history --keychain-profile %q\n' "$NOTARY_PROFILE" >&2
+      printf '  xcrun notarytool history --keychain-profile %q' "$NOTARY_PROFILE" >&2
+      if [ -n "$NOTARY_KEYCHAIN" ]; then printf ' --keychain %q' "$NOTARY_KEYCHAIN" >&2; fi
+      printf '\n' >&2
     fi
-    printf '  xcrun notarytool log %q --keychain-profile %q ./notary-log.json\n' "$submission" "$NOTARY_PROFILE" >&2
+    printf '  xcrun notarytool log %q --keychain-profile %q' "$submission" "$NOTARY_PROFILE" >&2
+    if [ -n "$NOTARY_KEYCHAIN" ]; then printf ' --keychain %q' "$NOTARY_KEYCHAIN" >&2; fi
+    printf ' ./notary-log.json\n' >&2
     exit 1
   fi
 }

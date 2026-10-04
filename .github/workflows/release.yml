@@ -1,39 +1,129 @@
 name: Release DMG
-# Actions 先上传 ad-hoc DMG；维护者等待本工作流完成后，在本机签名、公证并替换附件。
-# 流程见 00-工作流系统/menubar-app/RELEASING.md；不在 CI 配置 Apple 凭据。
+# release Environment 配齐六个 secret 后签名、公证；缺失时构建 ad-hoc DMG。
 
 on:
   push:
     tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Existing release tag to rebuild (must match VERSION)'
+        required: true
+        type: string
 
 permissions:
   contents: write
 
 concurrency:
-  group: release-${{ github.ref }}
+  group: release-${{ inputs.tag || github.ref_name }}
   cancel-in-progress: false
 
 jobs:
   dmg:
     runs-on: macos-latest
+    environment: release
+    defaults:
+      run:
+        shell: bash
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && format('refs/tags/{0}', inputs.tag) || github.ref }}
           persist-credentials: false
       - name: Verify release tag matches VERSION
-        if: startsWith(github.ref, 'refs/tags/')
         env:
-          RELEASE_TAG: ${{ github.ref_name }}
+          RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
         run: test "$RELEASE_TAG" = "v$(cat VERSION)"
       - name: Build universal DMG
-        run: ./00-工作流系统/menubar-app/build.sh --dmg "$RUNNER_TEMP/Jobflow.dmg"
+        env:
+          MACOS_CERT_P12_BASE64: ${{ secrets.MACOS_CERT_P12_BASE64 }}
+          MACOS_CERT_PASSWORD: ${{ secrets.MACOS_CERT_PASSWORD }}
+          MACOS_SIGN_IDENTITY: ${{ secrets.MACOS_SIGN_IDENTITY }}
+          NOTARY_APPLE_ID: ${{ secrets.NOTARY_APPLE_ID }}
+          NOTARY_APP_PASSWORD: ${{ secrets.NOTARY_APP_PASSWORD }}
+          NOTARY_TEAM_ID: ${{ secrets.NOTARY_TEAM_ID }}
+        run: |
+          set +x
+          set -euo pipefail
+          for name in MACOS_CERT_P12_BASE64 MACOS_CERT_PASSWORD MACOS_SIGN_IDENTITY \
+                      NOTARY_APPLE_ID NOTARY_APP_PASSWORD NOTARY_TEAM_ID; do
+            if [ -z "${!name}" ]; then
+              echo '::notice::Signing secrets are incomplete; building an ad-hoc DMG.'
+              ./00-工作流系统/menubar-app/build.sh --dmg "$RUNNER_TEMP/Jobflow.dmg"
+              echo 'DMG: ad-hoc' >> "$GITHUB_STEP_SUMMARY"
+              exit 0
+            fi
+          done
+
+          BUILD_UMASK="$(umask)"
+          umask 077
+          KEYCHAIN_PATH="$RUNNER_TEMP/jobflow-signing.keychain-db"
+          CERT_PATH="$RUNNER_TEMP/jobflow-signing.p12"
+          KEYCHAIN_PASSWORD="$(openssl rand -hex 32)"
+          # security / notarytool can print certificate or account details, even on failure.
+          private_command() {
+            local stage="$1"
+            shift
+            if ! "$@" >/dev/null 2>&1; then
+              echo "::error::$stage failed; check the release Environment configuration."
+              exit 1
+            fi
+          }
+          printf '%s' "$MACOS_CERT_P12_BASE64" | base64 --decode > "$CERT_PATH"
+          private_command 'Create keychain' security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          private_command 'Configure keychain' security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          private_command 'Unlock keychain' security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          private_command 'Import certificate' security import "$CERT_PATH" -P "$MACOS_CERT_PASSWORD" \
+            -k "$KEYCHAIN_PATH" -T /usr/bin/codesign
+          private_command 'Configure private key access' security set-key-partition-list \
+            -S apple-tool:,apple: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          # Preserve the runner's existing search list, including paths containing spaces.
+          KEYCHAIN_LIST="$(security list-keychains -d user)"
+          keychains=("$KEYCHAIN_PATH")
+          while IFS= read -r keychain; do
+            keychains+=("$keychain")
+          done < <(printf '%s\n' "$KEYCHAIN_LIST" | sed -E 's/^[[:space:]]*"//; s/"[[:space:]]*$//')
+          private_command 'Set keychain search list' security list-keychains -d user -s \
+            "${keychains[@]}"
+          private_command 'Store notary credentials' xcrun notarytool store-credentials jobflow-ci \
+            --apple-id "$NOTARY_APPLE_ID" --team-id "$NOTARY_TEAM_ID" \
+            --password "$NOTARY_APP_PASSWORD" --keychain "$KEYCHAIN_PATH"
+          # Restrict signing material, but keep normal permissions inside the distributed App.
+          umask "$BUILD_UMASK"
+          JOBFLOW_SIGN_IDENTITY="$MACOS_SIGN_IDENTITY" JOBFLOW_NOTARY_PROFILE=jobflow-ci \
+            JOBFLOW_NOTARY_KEYCHAIN="$KEYCHAIN_PATH" \
+            ./00-工作流系统/menubar-app/build.sh --dmg "$RUNNER_TEMP/Jobflow.dmg" --notarize
+          echo 'DMG: notarized' >> "$GITHUB_STEP_SUMMARY"
       - name: Create release if needed and upload
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_REPO: ${{ github.repository }}
-          RELEASE_TAG: ${{ github.ref_name }}
+          RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
         run: |
+          set +x
+          set -euo pipefail
           if ! gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
             gh release create "$RELEASE_TAG" --verify-tag --title "$RELEASE_TAG" --generate-notes
           fi
           gh release upload "$RELEASE_TAG" "$RUNNER_TEMP/Jobflow.dmg" --clobber
+          DOWNLOAD_DIR="$(mktemp -d "$RUNNER_TEMP/jobflow-download.XXXXXX")"
+          gh release download "$RELEASE_TAG" --pattern Jobflow.dmg --dir "$DOWNLOAD_DIR"
+          LOCAL_SHA="$(shasum -a 256 "$RUNNER_TEMP/Jobflow.dmg" | cut -d ' ' -f 1)"
+          REMOTE_SHA="$(shasum -a 256 "$DOWNLOAD_DIR/Jobflow.dmg" | cut -d ' ' -f 1)"
+          if [ "$LOCAL_SHA" != "$REMOTE_SHA" ]; then
+            echo '::error::Release DMG SHA-256 does not match the local build.'
+            exit 1
+          fi
+          echo 'Release DMG SHA-256 verified.'
+      - name: Delete temporary signing material
+        if: always()
+        run: |
+          set +x
+          KEYCHAIN_PATH="$RUNNER_TEMP/jobflow-signing.keychain-db"
+          CERT_PATH="$RUNNER_TEMP/jobflow-signing.p12"
+          cleanup_status=0
+          if [ -f "$KEYCHAIN_PATH" ]; then
+            security delete-keychain "$KEYCHAIN_PATH" >/dev/null 2>&1 || cleanup_status=$?
+          fi
+          rm -f "$KEYCHAIN_PATH" "$CERT_PATH"
+          exit "$cleanup_status"
