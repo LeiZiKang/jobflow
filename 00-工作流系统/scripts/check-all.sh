@@ -32,6 +32,7 @@ python3 -m unittest -q 00-工作流系统/tests/test_inbound_digest.py
 python3 -m unittest -q 00-工作流系统/tests/test_report_v2.py
 python3 -m unittest -q 00-工作流系统/tests/test_today.py
 PYTHONDONTWRITEBYTECODE=1 python3 -m unittest -q 00-工作流系统/dashboard/test_server.py
+PYTHONDONTWRITEBYTECODE=1 python3 -m unittest -q 00-工作流系统/menubar-app/test_build.py
 PYTHONDONTWRITEBYTECODE=1 python3 -m unittest -q \
   00-工作流系统/local-control/test_runtime_store.py \
   00-工作流系统/local-control/test_runtime_adapters.py \
